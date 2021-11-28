@@ -37,7 +37,6 @@ dependencies:
 - mtl
 - nonempty-containers
 - pandoc
-- parsec
 - parser-combinators
 - primitive
 - split
