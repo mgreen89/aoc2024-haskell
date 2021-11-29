@@ -10,8 +10,6 @@ I've ignored anything I didn't understand (for now), so this has less functional
 
 ## To-do
 
-- Answer submit functionality
-
 - Support GHC 9.2 and `OverloadedRecordDot` to clean up all the record prefixes
 - Understand lenses better
 - Understand TemplateHaskell enough to use it to generate the base list of all solutions

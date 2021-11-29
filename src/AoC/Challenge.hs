@@ -9,6 +9,7 @@ module AoC.Challenge
   , ChallengeData(..)
   , challengeData
   , TestData(..)
+  , showAoCError,
   ) where
 
 import           AoC.Challenge.Day01           as AoC
