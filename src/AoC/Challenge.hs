@@ -8,6 +8,7 @@ module AoC.Challenge
   , challengePaths
   , ChallengeData(..)
   , challengeData
+  , TestData(..)
   ) where
 
 import           AoC.Challenge.Day01           as AoC
@@ -51,10 +52,12 @@ import           Data.Map                       ( Map )
 import qualified Data.Map                      as M
 import           Data.Text                      ( Text )
 import qualified Data.Text                     as T
+import           Data.Void                      ( Void )
 import           System.Directory
 import           System.FilePath
 import           System.IO.Error
 import qualified Text.Megaparsec               as MP
+import qualified Text.Megaparsec.Char          as MP
 import           Text.Printf
 
 data ChallengeSpec = ChallengeSpec
@@ -83,12 +86,13 @@ challengeMap =
     $ solutionList
 
 solutionList :: [(Day, (Part, SomeSolution))]
-solutionList = []
-  {-[ (mkDay_ 1, (Part1, SomeSolution day1a))
-  , (mkDay_ 1, (Part2, SomeSolution day1b))
-  , (mkDay_ 2, (Part1, SomeSolution day2a))
+solutionList =
+  [ (mkDay_ 1, (Part1, SomeSolution day01a))
+  , (mkDay_ 1, (Part2, SomeSolution day01b))
+  {-, (mkDay_ 2, (Part1, SomeSolution day2a))
   , (mkDay_ 2, (Part2, SomeSolution day2b))
-  ]-}
+  -}
+  ]
 
 showAoCError :: AoCError -> [String]
 showAoCError = \case
@@ -108,11 +112,13 @@ data ChallengePaths = ChallengePaths
   deriving Show
 
 challengePaths :: ChallengeSpec -> ChallengePaths
-challengePaths (ChallengeSpec d _) = ChallengePaths
-  { _cpInput = "input-data" </> printf "day%02d" d' <.> "txt"
-  , _cpTests = "test-data" </> printf "day%02d" d' <.> "txt"
+challengePaths (ChallengeSpec d p) = ChallengePaths
+  { _cpInput = "data" </> "input" </> printf "day%02d" d' <.> "txt"
+  , _cpTests = "data" </> "test" </> printf "day%02d%c" d' p' <.> "txt"
   }
-  where d' = dayInt d
+  where
+    d' = dayInt d
+    p' = partChar p
 
 makeChallengePathDirs :: ChallengePaths -> IO ()
 makeChallengePathDirs ChallengePaths {..} =
@@ -125,7 +131,7 @@ readFileMaybe fp = do
 
 data ChallengeData = ChallengeData
   { _cdInput :: !(Either [String] String)
-  , _cdTests :: ![(String, String)]
+  , _cdTests :: ![TestData]
   }
 
 challengeData :: Config -> ChallengeSpec -> IO ChallengeData
@@ -138,7 +144,14 @@ challengeData Config {..} spec@ChallengeSpec {..} = do
         =<< liftIO (readFileMaybe _cpInput)
       , fetchInput
       ]
-  return ChallengeData { _cdInput = inp, _cdTests = [] }
+  ts <- readFileMaybe _cpTests >>= \case
+    Nothing -> pure []
+    Just s  -> case MP.parse parseTests _cpTests s of
+      -- Put [] in the IO functor (no test data), and print an error.
+      Left  e -> [] <$ putStrLn (MP.errorBundlePretty e)
+      Right r -> pure r
+
+  return ChallengeData { _cdInput = inp, _cdTests = ts }
  where
   cps@ChallengePaths {..} = challengePaths spec
   fetchInput :: ExceptT [String] IO String
@@ -149,3 +162,20 @@ challengeData Config {..} spec@ChallengeSpec {..} = do
     liftIO $ writeFile _cpInput inp
     pure inp
     where a = AoCInput _csDay
+
+
+data TestData = TestData
+  { _tdInput  :: String
+  , _tdAnswer :: String
+  }
+
+parseTests :: MP.Parsec Void String [TestData]
+parseTests = MP.many parseTest <* MP.eof
+
+parseTest :: MP.Parsec Void String TestData
+parseTest = do
+  inp <- MP.manyTill MP.anySingle $ MP.lookAhead (MP.string ">>>")
+  ans <-
+    MP.string ">>>" *> MP.space1 *> MP.many (MP.anySingleBut '\n') <* MP.single
+      '\n'
+  pure TestData { _tdInput = inp, _tdAnswer = ans }

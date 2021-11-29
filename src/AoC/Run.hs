@@ -32,7 +32,7 @@ data TestSpec
   = TSAll
   | TSDayAll {_tsDay :: Day}
   | TSDayPart {_tsSpec :: ChallengeSpec}
-  deriving (Show)
+  deriving Show
 
 data RunOpts = RunOpts
   { _roSpec   :: !TestSpec
@@ -93,8 +93,14 @@ runOne
 runOne cfg ro@RunOpts {..} d p sol = do
   let ChallengePaths {..} = challengePaths (ChallengeSpec d p)
   withColor ANSI.Dull ANSI.Blue
-    $ printf ">> Day %02d%c " (dayInt d) (partChar p)
+    $ printf ">> Day %02d%c" (dayInt d) (partChar p)
   cd@ChallengeData {..} <- challengeData cfg (ChallengeSpec d p)
+  if _roTest
+    then do
+      printf "\n"
+      runTestSuite sol cd
+      printf "Answer :"
+    else printf " "
   case _cdInput of
     Right inp
       | _roBench -> do
@@ -111,21 +117,52 @@ runOne cfg ro@RunOpts {..} d p sol = do
               _ -> do
                 putStrLn "(No parse)"
                 pure $ Left ["No results when benchmarking"]
-      | _roActual -> first ((: []) . show) <$> runTestCase sol inp cd
+      | _roActual -> first ((: []) . show) <$> runSol sol inp
       | otherwise -> pure $ Left ["Skipping!"]
-    Left e -> Left e <$ putStrLn "[INPUT ERROR]" <* mapM_ putStrLn e
+    Left e
+      | _roTest -> pure (Left ["Ran tests and no main input"])
+      | otherwise -> Left e <$ putStrLn "[INPUT ERROR]" <* mapM_ putStrLn e
 
-runTestCase
-  :: SomeSolution -> String -> ChallengeData -> IO (Either SolutionError String)
-runTestCase sol inp ChallengeData {..} = do
-  printf " %s\n" resStr
-  return res
- where
-  res    = runSomeSolution sol inp
-  resStr = case res of
+runTestSuite :: SomeSolution -> ChallengeData -> IO (Maybe Bool)
+runTestSuite sol ChallengeData {..} = do
+  res <- traverse (runTestCase sol) _cdTests
+  unless (null res) $ do
+    let (mark, color) = if and res then ('✓', ANSI.Green) else ('✗', ANSI.Red  )
+    withColor ANSI.Vivid color $
+      printf "[%c] %d/%d passed\n" mark (length (filter id res)) (length res)
+  pure $ and res <$ guard (not (null res))
+
+type SolutionResult = Either SolutionError String
+
+solResString :: SolutionResult -> String
+solResString res =
+  case res of
     Right r           -> r
     Left  (SEParse e) -> printf "ERROR Parse: %s" e
     Left  (SESolve e) -> printf "ERROR Solve: %s" e
+
+runTestCase :: SomeSolution -> TestData -> IO Bool
+runTestCase sol TestData{..} = do
+  withColor ANSI.Dull color $ printf "[%c]" mark
+  printf " (%s)" (solResString res)
+  if pass
+    then printf "\n"
+    else withColor ANSI.Vivid ANSI.Red $ printf " (Expected: %s)\n" _tdAnswer
+  return pass
+ where
+  res    = runSomeSolution sol _tdInput
+  (mark, pass, color) = case res of
+      Right r -> if strip _tdAnswer == strip r
+        then ('✓', True, ANSI.Green)
+        else ('✗', False, ANSI.Red)
+      Left _ -> ('✗', False, ANSI.Red)
+
+runSol :: SomeSolution -> String -> IO SolutionResult
+runSol sol inp = do
+  printf " %s\n" (solResString res)
+  return res
+ where
+  res    = runSomeSolution sol inp
 
 runSolution :: Solution a b -> String -> Either SolutionError String
 runSolution Solution {..} inp = do
