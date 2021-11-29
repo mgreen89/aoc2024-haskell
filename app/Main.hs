@@ -46,7 +46,7 @@ main = do
     Submit so -> void $ mainSubmit cfg so
   forOf_ _Left out $ \e -> do
     withColor ANSI.Vivid ANSI.Red $ putStrLn "[ERROR]"
-    mapM_ putStrLn e
+    traverse_ putStrLn e
  where
   availableDays =
     intercalate ", " . map (show . dayInt) . M.keys $ challengeMap

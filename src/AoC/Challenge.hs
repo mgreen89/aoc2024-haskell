@@ -9,7 +9,7 @@ module AoC.Challenge
   , ChallengeData(..)
   , challengeData
   , TestData(..)
-  , showAoCError,
+  , showAoCError
   ) where
 
 import           AoC.Challenge.Day01           as AoC
@@ -88,9 +88,9 @@ challengeMap =
 
 solutionList :: [(Day, (Part, SomeSolution))]
 solutionList =
-  [ (mkDay_ 1, (Part1, SomeSolution day01a))
+  [{- (mkDay_ 1, (Part1, SomeSolution day01a))
   , (mkDay_ 1, (Part2, SomeSolution day01b))
-  {-, (mkDay_ 2, (Part1, SomeSolution day2a))
+  , (mkDay_ 2, (Part1, SomeSolution day2a))
   , (mkDay_ 2, (Part2, SomeSolution day2b))
   -}
   ]
@@ -117,13 +117,13 @@ challengePaths (ChallengeSpec d p) = ChallengePaths
   { _cpInput = "data" </> "input" </> printf "day%02d" d' <.> "txt"
   , _cpTests = "data" </> "test" </> printf "day%02d%c" d' p' <.> "txt"
   }
-  where
-    d' = dayInt d
-    p' = partChar p
+ where
+  d' = dayInt d
+  p' = partChar p
 
 makeChallengePathDirs :: ChallengePaths -> IO ()
 makeChallengePathDirs ChallengePaths {..} =
-  mapM_ (createDirectoryIfMissing True . takeDirectory) [_cpInput, _cpTests]
+  traverse_ (createDirectoryIfMissing True . takeDirectory) [_cpInput, _cpTests]
 
 readFileMaybe :: FilePath -> IO (Maybe String)
 readFileMaybe fp = do
@@ -164,7 +164,6 @@ challengeData Config {..} spec@ChallengeSpec {..} = do
     pure inp
     where a = AoCInput _csDay
 
-
 data TestData = TestData
   { _tdInput  :: String
   , _tdAnswer :: String
@@ -177,6 +176,8 @@ parseTest :: MP.Parsec Void String TestData
 parseTest = do
   inp <- MP.manyTill MP.anySingle $ MP.lookAhead (MP.string ">>>")
   ans <-
-    MP.string ">>>" *> MP.space1 *> MP.many (MP.anySingleBut '\n') <* MP.single
-      '\n'
+    MP.string ">>>"
+    *> MP.space1
+    *> MP.many (MP.anySingleBut '\n')
+    <* (MP.single '\n' <|> ('\n' <$ MP.lookAhead MP.eof))
   pure TestData { _tdInput = inp, _tdAnswer = ans }

@@ -19,6 +19,7 @@ import           Control.Monad
 import           Control.Monad.Except
 import           Criterion
 import           Data.Bifunctor
+import           Data.Foldable
 import           Data.Map                       ( Map )
 import qualified Data.Map                      as M
 import qualified Data.Set                      as S
@@ -64,7 +65,8 @@ mainRun
   -> m (Map Day (Map Part (Either [String] String)))
 mainRun cfg ro@RunOpts {..} = do
   solsToRun <- liftEither . first (: []) . filterChallengeMap $ _roSpec
-  liftIO $ runAll cfg ro solsToRun
+  liftIO $ flip M.traverseWithKey solsToRun $ \d ->
+    M.traverseWithKey $ \p -> runOne cfg ro d p
 
 mainSubmit
   :: (MonadIO m, MonadError [String] m)
@@ -131,14 +133,6 @@ displayStatus = \case
       Nothing -> ""
       Just s  -> printf "  Hint: Answer was %s." s
 
-runAll
-  :: Config
-  -> RunOpts
-  -> ChallengeMap
-  -> IO (Map Day (Map Part (Either [String] String)))
-runAll cfg ro cm =
-  flip M.traverseWithKey cm $ \d -> M.traverseWithKey $ \p -> runOne cfg ro d p
-
 runOne
   :: Config
   -> RunOpts
@@ -146,7 +140,7 @@ runOne
   -> Part
   -> SomeSolution
   -> IO (Either [String] String)
-runOne cfg ro@RunOpts {..} d p sol = do
+runOne cfg RunOpts {..} d p sol = do
   let ChallengePaths {..} = challengePaths (ChallengeSpec d p)
   withColor ANSI.Dull ANSI.Blue $ printf ">> Day %02d%c" (dayInt d) (partChar p)
   cd@ChallengeData {..} <- challengeData cfg (ChallengeSpec d p)
@@ -159,14 +153,14 @@ runOne cfg ro@RunOpts {..} d p sol = do
   case _cdInput of
     Right inp
       | _roBench -> do
-        _ <- evaluate (force inp)
+        evaluate (force inp)
         case sol of
           SomeSolution Solution {..} -> do
             let i = sParse inp
             case i of
               Right x -> do
-                _ <- evaluate (force x)
-                benchmark (nf sSolve x)
+                evaluate $ force x
+                benchmark $ nf sSolve x
                 putStrLn "* excluding parsing"
                 pure $ Left ["No results when benchmarking"]
               _ -> do
@@ -175,8 +169,10 @@ runOne cfg ro@RunOpts {..} d p sol = do
       | _roActual -> first ((: []) . show) <$> runSol sol inp
       | otherwise -> pure $ Left ["Skipping!"]
     Left e
-      | _roTest   -> pure (Left ["Ran tests and no main input"])
-      | otherwise -> Left e <$ putStrLn "[INPUT ERROR]" <* mapM_ putStrLn e
+      | _roTest
+      -> pure (Left ["Ran tests and no main input"])
+      | otherwise
+      -> Left e <$ putStrLn "[INPUT ERROR]" <* traverse_ putStrLn e
 
 runTestSuite :: SomeSolution -> ChallengeData -> IO (Maybe Bool)
 runTestSuite sol ChallengeData {..} = do
@@ -245,6 +241,3 @@ filterChallengeMap = \case
     ps <- getDay challengeMap d
     c  <- getPart ps p
     pure $ M.singleton d (M.singleton p c)
-
-
-
