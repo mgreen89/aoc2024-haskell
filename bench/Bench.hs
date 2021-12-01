@@ -4,5 +4,6 @@ import Control.Monad.Except
 
 main :: IO ()
 main = do
-  void . runExceptT . mainRun $ (defaultRunOpts TSAll)
+  cfg <- readConfig defConfPath
+  void . runExceptT . mainRun cfg $ (defaultRunOpts TSAll)
     { _roBench = True}
