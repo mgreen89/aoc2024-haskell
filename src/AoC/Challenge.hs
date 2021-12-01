@@ -38,7 +38,7 @@ import           AoC.Challenge.Day23           as AoC
 import           AoC.Challenge.Day24           as AoC
 import           AoC.Challenge.Day25           as AoC
 
-import           Advent
+import           Advent.Extra
 import           AoC.Config
 import           AoC.Solution
 import           AoC.Util
@@ -88,23 +88,12 @@ challengeMap =
 
 solutionList :: [(Day, (Part, SomeSolution))]
 solutionList =
-  [{- (mkDay_ 1, (Part1, SomeSolution day01a))
+  [(mkDay_ 1, (Part1, SomeSolution day01a))
   , (mkDay_ 1, (Part2, SomeSolution day01b))
-  , (mkDay_ 2, (Part1, SomeSolution day2a))
+  {-, (mkDay_ 2, (Part1, SomeSolution day2a))
   , (mkDay_ 2, (Part2, SomeSolution day2b))
   -}
   ]
-
-showAoCError :: AoCError -> [String]
-showAoCError = \case
-  AoCClientError e ->
-    [ "Error contacting Advent of Code server to fetch input"
-    , "Possible invalid session key"
-    , printf "Server response: %s" (show e)
-    ]
-  AoCReleaseError t ->
-    ["Challenge not yet released!", printf "Please wait %s" (show t)]
-  AoCThrottleError -> ["Too many requests at a time.  Please slow down."]
 
 data ChallengePaths = ChallengePaths
   { _cpInput :: !FilePath
