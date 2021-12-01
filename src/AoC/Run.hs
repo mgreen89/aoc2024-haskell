@@ -8,7 +8,7 @@ module AoC.Run
   , mainSubmit
   ) where
 
-import           Advent
+import           Advent.Extra
 import           AoC.Challenge
 import           AoC.Config
 import           AoC.Solution
@@ -103,35 +103,16 @@ mainSubmit cfg@Config {..} SubmitOpts {..} = do
   let (color, out) = displayStatus status
   liftIO $ withColor ANSI.Vivid color $ putStrLn out
   pure output
-
-displayStatus :: SubmitRes -> (ANSI.Color, String)
-displayStatus = \case
-  SubCorrect r     -> (ANSI.Green, correctMsg r)
-  SubIncorrect t h -> (ANSI.Red, incorrectMsg t h)
-  SubWait t ->
-    let (m, s) = t `divMod` 60
-        resp =
-          printf "Answer re-submitted too soon.  Please wait %dmin %dsec" m s
-    in  (ANSI.Yellow, resp)
-  SubInvalid{} ->
-    ( ANSI.Blue
-    , "Submission was rejected.  Maybe not unlocked yet, or already answered?"
-    )
-  SubUnknown{} -> (ANSI.Magenta, "Response from server was not recognized.")
  where
-  correctMsg Nothing  = "Answer was correct!"
-  correctMsg (Just r) = printf
-    "Answer was correct, and you made the global leaderboard at rank %d !!"
-    r
-  incorrectMsg t h = printf
-    "Answer was incorrect!%s  Please wait %d before submitting again"
-    hintStr
-    (t `div` 60)
-   where
-    hintStr :: String
-    hintStr = case h of
-      Nothing -> ""
-      Just s  -> printf "  Hint: Answer was %s." s
+  displayStatus :: SubmitRes -> (ANSI.Color, String)
+  displayStatus sr =
+    let color = case sr of
+          SubCorrect _     -> ANSI.Green
+          SubIncorrect _ _ -> ANSI.Red
+          SubWait _        -> ANSI.Yellow
+          SubInvalid       -> ANSI.Blue
+          SubUnknown _     -> ANSI.Magenta
+    in  (color, showAoCSubmitRes sr)
 
 runOne
   :: Config
