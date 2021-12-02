@@ -32,8 +32,9 @@ instructionParser = do
 instructionsParser :: MP.Parsec Void String [Instruction]
 instructionsParser = MP.sepEndBy instructionParser MP.eol
 
-parse :: MP.Parsec Void String a -> String -> String -> Either String a
-parse a b = first MP.errorBundlePretty . MP.parse a b
+parseInstructions :: String -> Either String [Instruction]
+parseInstructions =
+  first MP.errorBundlePretty . MP.parse instructionsParser "day02"
 
 instrToVecA :: Instruction -> V2 Int
 instrToVecA instr = case instr of
@@ -42,21 +43,19 @@ instrToVecA instr = case instr of
   Up      x -> V2 0 (-x)
 
 day02a :: Solution [Instruction] Int
-day02a = Solution
-  { sParse = parse instructionsParser "day02a"
-  , sShow  = show
-  , sSolve = Right . product @V2 . sum . fmap instrToVecA
-  }
+day02a = Solution { sParse = parseInstructions
+                  , sShow  = show
+                  , sSolve = Right . product . sum . fmap instrToVecA
+                  }
 
 day02bf :: (Int, V2 Int) -> Instruction -> (Int, V2 Int)
-day02bf (aim, pos) inst =
-  case inst of
-    Forward x -> (aim, pos + V2 x (x * aim))
-    Down x -> (aim + x, pos)
-    Up x -> (aim - x, pos)
+day02bf (aim, pos) inst = case inst of
+  Forward x -> (aim, pos + V2 x (x * aim))
+  Down    x -> (aim + x, pos)
+  Up      x -> (aim - x, pos)
 
 day02b :: Solution [Instruction] Int
-day02b = Solution { sParse = parse instructionsParser "day02b"
+day02b = Solution { sParse = parseInstructions
                   , sShow  = show
-                  , sSolve = Right . product @V2 . snd . foldl' day02bf (0, V2 0 0)
+                  , sSolve = Right . product . snd . foldl' day02bf (0, V2 0 0)
                   }
