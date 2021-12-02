@@ -1,15 +1,19 @@
+{-# OPTIONS_GHC -Wno-unused-imports   #-}
+
 module AoC.Challenge
-  ( ChallengeSpec(..)
+  ( module AoC
+  , ChallengeSpec(..)
   , SomeSolution(..)
   , SolutionError(..)
-  , ChallengeMap(..)
+  , ChallengeMap
   , challengeMap
+  , getDay
+  , getPart
   , ChallengePaths(..)
   , challengePaths
   , ChallengeData(..)
   , challengeData
   , TestData(..)
-  , showAoCError
   ) where
 
 import           AoC.Challenge.Day01           as AoC
@@ -51,7 +55,6 @@ import           Data.Bifunctor
 import           Data.Foldable
 import           Data.Map                       ( Map )
 import qualified Data.Map                      as M
-import           Data.Text                      ( Text )
 import qualified Data.Text                     as T
 import           Data.Void                      ( Void )
 import           System.Directory
@@ -61,31 +64,17 @@ import qualified Text.Megaparsec               as MP
 import qualified Text.Megaparsec.Char          as MP
 import           Text.Printf
 
-data ChallengeSpec = ChallengeSpec
-  { _csDay  :: Day
-  , _csPart :: Part
-  }
-  deriving Show
-
-data SolutionError
-  = SEParse String
-  | SESolve String
-  deriving (Show)
-
-data SomeSolution where
-  -- NFData for two reasons:
-  --  `a` so that the parse function can be forced, before...
-  --  `b` so that the solve function can be benchmarked.
-  SomeSolution ::(NFData a, NFData b) => Solution a b -> SomeSolution
-
+-- | Type alias for the challenge map.
 type ChallengeMap = Map Day (Map Part SomeSolution)
 
+-- | A map of all challenges.
 challengeMap :: ChallengeMap
 challengeMap =
   M.unionsWith M.union
     . map (uncurry M.singleton . second (uncurry M.singleton))
     $ solutionList
 
+-- | List of all the completed solutions.
 solutionList :: [(Day, (Part, SomeSolution))]
 solutionList =
   [ (mkDay_ 1, (Part1, SomeSolution day01a))
@@ -94,12 +83,32 @@ solutionList =
   , (mkDay_ 2, (Part2, SomeSolution day02b))
   ]
 
+-- | Get a map of the completed solution parts for the given day.
+getDay :: ChallengeMap -> Day -> Either String (Map Part SomeSolution)
+getDay cm d =
+  maybeToEither (printf "Day not yet available: %d" (dayInt d))
+    $ M.lookup d cm
+
+-- | Get the solution to the given part.
+getPart :: Map Part SomeSolution -> Part -> Either String SomeSolution
+getPart ps p =
+  maybeToEither (printf "Part not found: %c" (partChar p)) $ M.lookup p ps
+
+-- | Specification for a single challenge.
+data ChallengeSpec = ChallengeSpec
+  { _csDay  :: Day
+  , _csPart :: Part
+  }
+  deriving Show
+
+-- | All the file paths associated with a single challenge.
 data ChallengePaths = ChallengePaths
   { _cpInput :: !FilePath
   , _cpTests :: !FilePath
   }
   deriving Show
 
+-- | Get the challenge paths for the given challenge.
 challengePaths :: ChallengeSpec -> ChallengePaths
 challengePaths (ChallengeSpec d p) = ChallengePaths
   { _cpInput = "data" </> "input" </> printf "day%02d" d' <.> "txt"
@@ -118,11 +127,15 @@ readFileMaybe fp = do
   readResult <- tryJust (guard . isDoesNotExistError) (readFile fp)
   traverse (evaluate . force) . eitherToMaybe $ readResult
 
+-- | The associated input and test data for a given challenge.
 data ChallengeData = ChallengeData
   { _cdInput :: !(Either [String] String)
   , _cdTests :: ![TestData]
   }
 
+-- | Get the associated data for a given challenge.
+-- This will fetch input from online (if not already available) if a session
+-- token is present in the given configuration.
 challengeData :: Config -> ChallengeSpec -> IO ChallengeData
 challengeData Config {..} spec@ChallengeSpec {..} = do
   makeChallengePathDirs cps
@@ -145,13 +158,14 @@ challengeData Config {..} spec@ChallengeSpec {..} = do
   cps@ChallengePaths {..} = challengePaths spec
   fetchInput :: ExceptT [String] IO String
   fetchInput = do
-    s <- maybeToEither ["Session key needed to fetch input"] _cfgSession
-    let opts = defaultAoCOpts _cfgYear s
+    sessKey <- maybeToEither ["Session key needed to fetch input"] _cfgSession
+    let opts = defaultAoCOpts _cfgYear sessKey
     inp <- liftEither . bimap showAoCError T.unpack =<< liftIO (runAoC opts a)
     liftIO $ writeFile _cpInput inp
     pure inp
     where a = AoCInput _csDay
 
+-- | Input and expected answer for a single test.
 data TestData = TestData
   { _tdInput  :: String
   , _tdAnswer :: String

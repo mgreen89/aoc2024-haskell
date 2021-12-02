@@ -7,6 +7,7 @@ module Advent.Extra
 import           Advent
 import           Text.Printf
 
+-- | Convert an 'AoCError' into a list of human-readable strings.
 showAoCError :: AoCError -> [String]
 showAoCError = \case
   AoCClientError e ->
@@ -18,6 +19,7 @@ showAoCError = \case
     ["Challenge not yet released!", printf "Please wait %s" (show t)]
   AoCThrottleError -> ["Too many requests at a time.  Please slow down."]
 
+-- | Convert a 'SubmitRes' to a human-readable string description.
 showAoCSubmitRes :: SubmitRes -> String
 showAoCSubmitRes = \case
   SubCorrect Nothing -> "Answer was correct!"

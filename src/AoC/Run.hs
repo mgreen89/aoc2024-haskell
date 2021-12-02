@@ -1,5 +1,5 @@
 module AoC.Run
-  ( TestSpec(..)
+  ( RunSpec(..)
   , RunOpts(..)
   , defaultRunOpts
   , mainRun
@@ -22,27 +22,32 @@ import           Data.Bifunctor
 import           Data.Foldable
 import           Data.Map                       ( Map )
 import qualified Data.Map                      as M
-import qualified Data.Set                      as S
 import           Data.Text                      ( Text )
-import qualified Data.Text                     as T
-import qualified Data.Text.IO                  as T
 import qualified System.Console.ANSI           as ANSI
 import           Text.Printf
 
-data TestSpec
-  = TSAll
-  | TSDayAll {_tsDay :: Day}
-  | TSDayPart {_tsSpec :: ChallengeSpec}
+-- | Specification for which solutions to run (and optionally test/bench etc...)
+data RunSpec
+  = RSAll
+  | RSDayAll {_rsDay :: Day}
+  | RSDayPart {_rsSpec :: ChallengeSpec}
   deriving Show
 
+-- | Options for "run" mode.
 data RunOpts = RunOpts
-  { _roSpec   :: !TestSpec
+  { _roSpec   :: !RunSpec
   , _roActual :: !Bool
   , _roTest   :: !Bool
   , _roBench  :: !Bool
   }
   deriving Show
 
+-- | Default "run" mode options.
+defaultRunOpts :: RunSpec -> RunOpts
+defaultRunOpts rs =
+  RunOpts { _roSpec = rs, _roActual = True, _roTest = False, _roBench = False }
+
+-- | Options for "submit" mode.
 data SubmitOpts = SubmitOpts
   { _soSpec  :: !ChallengeSpec
   , _soTest  :: !Bool
@@ -50,14 +55,12 @@ data SubmitOpts = SubmitOpts
   }
   deriving Show
 
-defaultRunOpts :: TestSpec -> RunOpts
-defaultRunOpts ts =
-  RunOpts { _roSpec = ts, _roActual = True, _roTest = False, _roBench = False }
-
+-- | Default "submit" mode options.
 defaultSubmitOpts :: ChallengeSpec -> SubmitOpts
 defaultSubmitOpts cs =
   SubmitOpts { _soSpec = cs, _soTest = True, _soForce = False }
 
+-- | Main function for the "run" mode.
 mainRun
   :: (MonadIO m, MonadError [String] m)
   => Config
@@ -68,21 +71,19 @@ mainRun cfg ro@RunOpts {..} = do
   liftIO $ flip M.traverseWithKey solsToRun $ \d ->
     M.traverseWithKey $ \p -> runOne cfg ro d p
 
+-- | Main function for the "submit" mode.
 mainSubmit
   :: (MonadIO m, MonadError [String] m)
   => Config
   -> SubmitOpts
   -> m (Text, SubmitRes)
 mainSubmit cfg@Config {..} SubmitOpts {..} = do
+  sessKey <- maybeToEither ["ERROR: Session Key required to submit"] _cfgSession
   let ChallengeSpec {..}  = _soSpec
-      ChallengePaths {..} = challengePaths _soSpec
   cd@ChallengeData {..} <- liftIO $ challengeData cfg _soSpec
   dps <- liftEither . first (: []) . getDay challengeMap $ _csDay
   sol                   <- liftEither . first (: []) . getPart dps $ _csPart
   inp                   <- liftEither $ first ("ERROR: No input" :) _cdInput
-  opts                  <-
-    defaultAoCOpts _cfgYear
-      <$> maybeToEither ["ERROR: Session Key required to submit"] _cfgSession
 
   when _soTest $ do
     testRes <- liftIO $ runTestSuite sol cd
@@ -93,12 +94,13 @@ mainSubmit cfg@Config {..} SubmitOpts {..} = do
       else throwError ["Submission aborted."]
   res <-
     liftEither
-    . first (("Solution Error: " :) . (: []) . show)
+    . first (("Solution Error: " :) . (: []) . showSolutionError)
     $ runSomeSolution sol inp
   liftIO $ printf "Submitting solution %s\n" res
 
-  let submit = runAoC opts (AoCSubmit _csDay _csPart res)
-  output@(resp, status) <- liftEither . first showAoCError =<< liftIO submit
+  let opts = defaultAoCOpts _cfgYear sessKey
+      submit = runAoC opts (AoCSubmit _csDay _csPart res)
+  output@(_, status) <- liftEither . first showAoCError =<< liftIO submit
 
   let (color, out) = displayStatus status
   liftIO $ withColor ANSI.Vivid color $ putStrLn out
@@ -122,7 +124,6 @@ runOne
   -> SomeSolution
   -> IO (Either [String] String)
 runOne cfg RunOpts {..} d p sol = do
-  let ChallengePaths {..} = challengePaths (ChallengeSpec d p)
   withColor ANSI.Dull ANSI.Blue $ printf ">> Day %02d%c" (dayInt d) (partChar p)
   cd@ChallengeData {..} <- challengeData cfg (ChallengeSpec d p)
   if _roTest
@@ -134,7 +135,7 @@ runOne cfg RunOpts {..} d p sol = do
   case _cdInput of
     Right inp
       | _roBench -> do
-        evaluate (force inp)
+        _ <- evaluate (force inp)
         case sol of
           SomeSolution Solution {..} -> do
             let i = sParse inp
@@ -168,9 +169,8 @@ type SolutionResult = Either SolutionError String
 
 solResString :: SolutionResult -> String
 solResString res = case res of
-  Right r           -> r
-  Left  (SEParse e) -> printf "ERROR Parse: %s" e
-  Left  (SESolve e) -> printf "ERROR Solve: %s" e
+  Right r -> r
+  Left  e -> printf "[ERROR] %s" (showSolutionError e)
 
 runTestCase :: SomeSolution -> TestData -> IO Bool
 runTestCase sol TestData {..} = do
@@ -194,31 +194,13 @@ runSol sol inp = do
   return res
   where res = runSomeSolution sol inp
 
-runSolution :: Solution a b -> String -> Either SolutionError String
-runSolution Solution {..} inp = do
-  x <- first SEParse . sParse $ stripNewlines inp
-  y <- first SESolve . sSolve $ x
-  pure $ sShow y
-
-runSomeSolution :: SomeSolution -> String -> Either SolutionError String
-runSomeSolution (SomeSolution s) = runSolution s
-
-getDay :: ChallengeMap -> Day -> Either String (Map Part SomeSolution)
-getDay cm d =
-  maybeToEither (printf "Day not yet available: %d" (dayInt d))
-    $ M.lookup d challengeMap
-
-getPart :: Map Part SomeSolution -> Part -> Either String SomeSolution
-getPart ps p =
-  maybeToEither (printf "Part not found: %c" (partChar p)) $ M.lookup p ps
-
-filterChallengeMap :: TestSpec -> Either String ChallengeMap
+filterChallengeMap :: RunSpec -> Either String ChallengeMap
 filterChallengeMap = \case
-  TSAll      -> pure challengeMap
-  TSDayAll d -> do
+  RSAll      -> pure challengeMap
+  RSDayAll d -> do
     ps <- getDay challengeMap d
     pure $ M.singleton d ps
-  TSDayPart (ChallengeSpec d p) -> do
+  RSDayPart (ChallengeSpec d p) -> do
     ps <- getDay challengeMap d
     c  <- getPart ps p
     pure $ M.singleton d (M.singleton p c)

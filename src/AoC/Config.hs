@@ -14,18 +14,22 @@ import           GHC.Generics                   ( Generic )
 import           System.IO.Error
 import           Text.Printf
 
+-- | Configuration data.
 data Config = Config
-  { _cfgSession :: Maybe String
-  , _cfgYear    :: Integer
+  { _cfgSession :: Maybe String   -- ^ default: 'Nothing'
+  , _cfgYear    :: Integer        -- ^ default: 2020
   }
   deriving (Generic, Show)
 
+-- | Default configuration.
 instance Default Config where
   def = Config { _cfgSession = Nothing, _cfgYear = 2020 }
 
+-- | Default configuration file path.
 defConfPath :: FilePath
 defConfPath = ".aoc-cfg.yaml"
 
+-- | Read in the given config file.
 readConfig :: FilePath -> IO Config
 readConfig fp = do
   cfgInp <- tryJust (guard . isDoesNotExistError) $ BS.readFile fp

@@ -7,7 +7,7 @@ import           AoC.Solution
 import           Control.DeepSeq
 import           Data.Bifunctor
 import           Data.Foldable
-import           Data.Void
+import           Data.Void                      ( Void )
 import           GHC.Generics
 import           Linear.V2                      ( V2(..) )
 import qualified Text.Megaparsec               as MP

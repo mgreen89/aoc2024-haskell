@@ -3,14 +3,11 @@
 import           Advent
 import           AoC
 import           Control.Applicative
-import           Control.DeepSeq
-import           Control.Exception
 import           Control.Lens            hiding ( argument )
 import           Control.Monad
 import           Control.Monad.Except
 import           Data.Char
 import           Data.Foldable
-import           Data.IORef
 import           Data.List                      ( intercalate )
 import qualified Data.Map                      as M
 import           Data.Maybe
@@ -30,9 +27,8 @@ data Opts = O
 
 main :: IO ()
 main = do
-  inputCache <- newIORef Nothing
-  O {..}     <- execParser $ info
-    (parseOpts inputCache <**> helper)
+  O {..} <- execParser $ info
+    (parseOpts <**> helper)
     (  fullDesc
     <> header "aoc-dev - Advent of Code interactive dev env"
     <> progDesc
@@ -69,8 +65,8 @@ parseChallengeSpec = do
   p <- argument readPart (metavar "PART" <> help "Challenge part ('a' or 'b')")
   pure $ ChallengeSpec d p
 
-parseTestSpec :: Parser TestSpec
-parseTestSpec = do
+parseRunSpec :: Parser RunSpec
+parseRunSpec = do
   d <- argument
     pDay
     (metavar "DAY" <> help "Day of challenge (1 - 25), or \"all\"")
@@ -78,9 +74,9 @@ parseTestSpec = do
     $ argument readPart (metavar "PART" <> help "Challenge part ('a' or 'b')")
   pure $ case d of
     Just d' -> case p of
-      Just p' -> TSDayPart (ChallengeSpec d' p')
-      Nothing -> TSDayAll d'
-    Nothing -> TSAll
+      Just p' -> RSDayPart (ChallengeSpec d' p')
+      Nothing -> RSDayAll d'
+    Nothing -> RSAll
  where
   pDay = asum
     [ Nothing <$ maybeReader (guard . (== "all") . map toLower)
@@ -89,7 +85,7 @@ parseTestSpec = do
 
 parseRun :: Parser RunOpts
 parseRun = do
-  _roSpec   <- parseTestSpec
+  _roSpec   <- parseRunSpec
   _roActual <-
     fmap not
     . switch
@@ -98,12 +94,10 @@ parseRun = do
       , short 's'
       , help "Do not run the actual input, but run tests and/or benchmarks"
       ]
-  _roTest <-
-    switch . mconcat $ [long "test", short 't', help "Run sample tests"]
+  _roTest  <- switch . mconcat $ [long "test", short 't', help "Run tests"]
   _roBench <-
     switch . mconcat $ [long "bench", short 'b', help "Run benchmarks"]
   pure RunOpts { .. }
-
 
 parseSubmit :: Parser SubmitOpts
 parseSubmit = do
@@ -122,9 +116,8 @@ parseSubmit = do
     $ [long "force", short 'f', help "Always submit, even if tests fail"]
   pure SubmitOpts { .. }
 
-
-parseOpts :: IORef (Maybe (Maybe (Day, String))) -> Parser Opts
-parseOpts inputCache = do
+parseOpts :: Parser Opts
+parseOpts = do
   _oConfig <-
     optional
     . strOption
