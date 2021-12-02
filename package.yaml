@@ -54,6 +54,7 @@ default-extensions:
   - ApplicativeDo
   - BangPatterns
   - DataKinds
+  - DeriveAnyClass
   - DeriveGeneric
   - FlexibleContexts
   - GADTs
