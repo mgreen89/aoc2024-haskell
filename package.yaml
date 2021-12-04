@@ -24,6 +24,7 @@ dependencies:
 - aeson
 - ansi-terminal
 - bytestring
+- bytestring-trie
 - containers
 - criterion
 - data-default-class
