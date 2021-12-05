@@ -1,6 +1,3 @@
-{-# LANGUAGE PartialTypeSignatures #-}
-{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
-
 module AoC.Challenge.Day05
   ( day05a
   , day05b
@@ -37,7 +34,6 @@ parse =
   first MP.errorBundlePretty . traverse (MP.parse lineParser "day05") . lines
 
 -- | Get a list of all the points (with integer co-ords) on a given line
---
 linePoints :: Line -> [Point]
 linePoints (V2 p1 p2) = [ p1 + n *^ step | n <- [0 .. gcf] ]
  where
@@ -61,7 +57,7 @@ day05a :: Solution [Line] Int
 day05a =
   Solution { sParse = parse, sShow = show, sSolve = Right . evalLines isPerp }
 
-day05b :: Solution _ _
+day05b :: Solution [Line] Int
 day05b = Solution { sParse = parse
                   , sShow  = show
                   , sSolve = Right . evalLines (const True)
