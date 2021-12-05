@@ -53,12 +53,16 @@ isPerp (V2 p1 p2) = 0 `elem` (p2 - p1)
 getFreqs :: (Foldable f, Ord a) => f a -> Map a Int
 getFreqs = M.fromListWith (+) . map (, 1) . toList
 
-evalLines :: [Line] -> Int
-evalLines =
-  M.size . M.filter (>= 2) . getFreqs . concatMap linePoints . filter isPerp
+evalLines :: (Line -> Bool) -> [Line] -> Int
+evalLines filterFn =
+  M.size . M.filter (>= 2) . getFreqs . concatMap linePoints . filter filterFn
 
 day05a :: Solution [Line] Int
-day05a = Solution { sParse = parse, sShow = show, sSolve = Right . evalLines }
+day05a =
+  Solution { sParse = parse, sShow = show, sSolve = Right . evalLines isPerp }
 
 day05b :: Solution _ _
-day05b = Solution { sParse = Right, sShow = show, sSolve = Right }
+day05b = Solution { sParse = parse
+                  , sShow  = show
+                  , sSolve = Right . evalLines (const True)
+                  }
