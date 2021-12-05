@@ -10,7 +10,6 @@ import qualified Data.ByteString               as BS
 import           Data.Foldable
 import           Data.List
 import qualified Data.Trie                     as T
-import           Debug.Trace
 
 binStrToInt :: String -> Int
 binStrToInt = foldl' go 0

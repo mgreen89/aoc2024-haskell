@@ -1,6 +1,3 @@
-{-# LANGUAGE PartialTypeSignatures #-}
-{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
-
 module AoC.Challenge.Day04
   ( day04a
   , day04b
