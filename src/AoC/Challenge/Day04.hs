@@ -3,16 +3,23 @@ module AoC.Challenge.Day04
   , day04b
   ) where
 
-import           AoC.Solution
-import           AoC.Util
+import           AoC.Solution                   ( Solution(..) )
+import           AoC.Util                       ( maybeToEither )
+import           Data.Bifunctor                 ( first )
+import           Data.Function                  ( on )
+import           Data.Functor.Foldable          ( ana
+                                                , cata
+                                                )
+import           Data.Functor.Foldable.TH       ( makeBaseFunctor )
 import           Data.IntMap                    ( IntMap )
 import qualified Data.IntMap                   as IM
 import           Data.IntSet                    ( IntSet )
 import qualified Data.IntSet                   as IS
 import           Data.List.Split                ( splitOn )
-import           Data.Maybe
-import           Data.Traversable
-import           Text.Read
+import           Data.Maybe                     ( mapMaybe )
+import           Data.Traversable               ( for )
+import           Safe                           ( maximumByMay )
+import           Text.Read                      ( readEither )
 
 
 wins :: [IntSet]
@@ -33,9 +40,9 @@ wins = fmap
 -- Map of value to position on the board.
 type Board = IntMap Int
 
-type Game = ([Int], [Board])
+type G = ([Int], [Board])
 
-parseGame :: String -> Either String ([Int], [Board])
+parseGame :: String -> Either String G
 parseGame inp = do
   let drawinp : boardinp = splitOn "\n\n" inp
   draws  <- traverse readEither $ splitOn "," drawinp
@@ -46,65 +53,84 @@ parseGame inp = do
     . words
   pure (draws, boards)
 
-stepBoard :: Int -> (Board, IntSet, Maybe Int) -> (Board, IntSet, Maybe Int)
-stepBoard inp (b, marked, _) =
-  let pos      = IM.lookup inp b
-      marked'  = maybe id IS.insert pos marked
-      finished = any (`IS.isSubsetOf` marked') wins
-      tot      = sum . IM.keys . IM.filter (`IS.notMember` marked') $ b
-  in  (b, marked', if finished then Just (tot * inp) else Nothing)
+-- Useful reading for understanding what's going on here.
+-- Part 1 and 2 of:
+--  https://blog.sumtypeofway.com/posts/introduction-to-recursion-schemes.html
 
-getFirst :: Game -> Maybe Int
-getFirst (inps, boards) = do
-  let states = fmap (, IS.empty, Nothing) boards
-  sols <- go inps states
-  (\(_, _, t) -> t) . head . snd $ sols
+-- Definition for a game functor.
+data Game = Turn Game
+          | Finish Int
+          | End
+
+makeBaseFunctor ''Game
+
+-- Algebra to turn the game functor into a Maybe (# turns taken, checksum).
+scoreAlg :: GameF (Maybe (Int, Int)) -> Maybe (Int, Int)
+scoreAlg = \case
+  TurnF   x -> first (+ 1) <$> x
+  FinishF x -> Just (1, x)
+  EndF      -> Nothing
+
+-- GameState to track the state of a single board.
+data GameInfo = GameInfo
+  { giDraws  :: [Int]
+  , giMarked :: IntSet
+  }
+
+-- Coalgebra to generate a Game functor with each step of the game.
+gameCoalg :: Board -> GameInfo -> GameF GameInfo
+gameCoalg board GameInfo {..} = case giDraws of
+  [] -> EndF
+  a : rest ->
+    let pos      = IM.lookup a board
+        marked'  = maybe id IS.insert pos giMarked
+        finished = any (`IS.isSubsetOf` marked') wins
+        tot      = sum . IM.keys . IM.filter (`IS.notMember` marked') $ board
+        chksum   = tot * a
+    in  if finished then FinishF chksum else TurnF $ GameInfo rest marked'
+
+initGame :: [Int] -> Board -> Game
+initGame draws board = ana (gameCoalg board) (GameInfo draws IS.empty)
+
+initGames :: G -> [Game]
+initGames (draws, boards) = fmap (initGame draws) boards
+
+finishGame :: Game -> Maybe (Int, Int)
+finishGame = cata scoreAlg
+
+-- Strict loop until a Left hit.
+loopEither :: (a -> Either r a) -> a -> r
+loopEither f = go
  where
-  go
-    :: [Int]
-    -> [(Board, IntSet, Maybe Int)]
-    -> Maybe ([Int], [(Board, IntSet, Maybe Int)])
-  go is bs = case filter (\(_, _, c) -> isJust c) bs of
-    [] -> case is of
-      []    -> Nothing
-      a : b -> go b (fmap (stepBoard a) bs)
-    sols -> Just ([], sols)
+  go !x = case f x of
+    Left  r  -> r
+    Right !y -> go y
 
-day04a :: Solution Game Int
-day04a = Solution { sParse = parseGame
-                  , sShow  = show
-                  , sSolve = maybeToEither "No games ended" . getFirst
-                  }
-
-getLast :: Game -> Maybe Int
-getLast (inps, boards) = do
-  let states = fmap (, IS.empty, Nothing) boards
-  sols <- go inps states
-  tot  <- (\(a, b) -> finish a (head b)) sols
-  (\(_, _, t) -> t) tot
+-- Get the first game to finish.
+-- Run a step on each game and check if any are done each step.
+getFirst :: G -> Either String Int
+getFirst = loopEither checkFinish . initGames
  where
-  go
-    :: [Int]
-    -> [(Board, IntSet, Maybe Int)]
-    -> Maybe ([Int], [(Board, IntSet, Maybe Int)])
-  go is bs =
-    let stillGoing = filter (\(_, _, t) -> isNothing t) bs
-    in  if length stillGoing == 1
-          then Just (is, stillGoing)
-          else case is of
-            []    -> Nothing
-            a : b -> go b (fmap (stepBoard a) stillGoing)
+  checkFinish :: [Game] -> Either (Either String Int) [Game]
+  checkFinish = traverse $ \case
+    Turn   i -> Right i
+    Finish x -> Left (Right x)
+    End      -> Left (Left "Game never finished")
 
-  finish
-    :: [Int] -> (Board, IntSet, Maybe Int) -> Maybe (Board, IntSet, Maybe Int)
-  finish is d@(b, m, t)
-    | isJust t = Just d
-    | otherwise = case is of
-      []    -> Nothing
-      a : b -> finish b (stepBoard a d)
+day04a :: Solution G Int
+day04a = Solution { sParse = parseGame, sShow = show, sSolve = getFirst }
 
-day04b :: Solution Game Int
-day04b = Solution { sParse = parseGame
-                  , sShow  = show
-                  , sSolve = maybeToEither "No games ended" . getLast
-                  }
+-- Run all the games to completion, the find the one with the highest
+-- required number of turns.
+getLast :: G -> Either String Int
+getLast =
+  fmap snd
+    . maybeToEither "No games finished"
+    . maximumByMay (compare `on` fst)
+    -- Could use 'hylo' here instead of (finish . init) (i.e. cata . ana),
+    -- but given we already have initGames just do this to prevent code dupe.
+    . mapMaybe finishGame
+    . initGames
+
+day04b :: Solution G Int
+day04b = Solution { sParse = parseGame, sShow = show, sSolve = getLast }

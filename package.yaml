@@ -40,6 +40,8 @@ dependencies:
 - pandoc
 - parser-combinators
 - primitive
+- recursion-schemes
+- safe
 - split
 - text
 - time
@@ -56,15 +58,20 @@ default-extensions:
   - BangPatterns
   - DataKinds
   - DeriveAnyClass
+  - DeriveFunctor
+  - DeriveFoldable
   - DeriveGeneric
+  - DeriveTraversable
   - FlexibleContexts
   - GADTs
   - KindSignatures
   - LambdaCase
   - PatternGuards
   - RecordWildCards
+  - TemplateHaskell
   - TupleSections
   - TypeApplications
+  - TypeFamilies
   - ViewPatterns
 
 executables:
