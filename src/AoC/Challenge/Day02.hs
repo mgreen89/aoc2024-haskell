@@ -4,11 +4,11 @@ module AoC.Challenge.Day02
   ) where
 
 import           AoC.Solution
-import           Control.DeepSeq
-import           Data.Bifunctor
-import           Data.Foldable
+import           Control.DeepSeq                ( NFData )
+import           Data.Bifunctor                 ( first )
+import           Data.Foldable                  ( foldl' )
 import           Data.Void                      ( Void )
-import           GHC.Generics
+import           GHC.Generics                   ( Generic )
 import           Linear.V2                      ( V2(..) )
 import qualified Text.Megaparsec               as MP
 import qualified Text.Megaparsec.Char          as MP

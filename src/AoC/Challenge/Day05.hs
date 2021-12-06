@@ -4,13 +4,13 @@ module AoC.Challenge.Day05
   ) where
 
 import           AoC.Solution
-import           Data.Bifunctor
-import           Data.Foldable
+import           Data.Bifunctor                 ( first )
+import           Data.Foldable                  ( toList )
 import           Data.Map                       ( Map )
 import qualified Data.Map                      as M
 import           Data.Void                      ( Void )
-import           Linear.V2
-import           Linear.Vector
+import           Linear.V2                      ( V2(..) )
+import           Linear.Vector                  ( (*^) )
 import qualified Text.Megaparsec               as MP
 import qualified Text.Megaparsec.Char          as MP
 import qualified Text.Megaparsec.Char.Lexer    as MPL

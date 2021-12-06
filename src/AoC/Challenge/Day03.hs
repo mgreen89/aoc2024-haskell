@@ -7,8 +7,12 @@ module AoC.Challenge.Day03
 
 import           AoC.Solution
 import qualified Data.ByteString               as BS
-import           Data.Foldable
-import           Data.List
+import           Data.Foldable                  ( foldl' )
+import           Data.List                      ( group
+                                                , sort
+                                                , sortOn
+                                                , transpose
+                                                )
 import qualified Data.Trie                     as T
 
 binStrToInt :: String -> Int
