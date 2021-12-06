@@ -23,6 +23,7 @@ dependencies:
 - advent-of-code-api >= 0.2.8
 - aeson
 - ansi-terminal
+- array
 - bytestring
 - bytestring-trie
 - containers

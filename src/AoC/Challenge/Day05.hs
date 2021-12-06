@@ -4,8 +4,16 @@ module AoC.Challenge.Day05
   ) where
 
 import           AoC.Solution
+import           Control.Monad.ST               ( ST
+                                                , runST
+                                                )
+import           Data.Array.MArray             as A
+import           Data.Array.ST                 as A
 import           Data.Bifunctor                 ( first )
-import           Data.Foldable                  ( toList )
+import           Data.Foldable                  ( for_
+                                                , toList
+                                                )
+import           Data.Int                       ( Int8 )
 import           Data.Map                       ( Map )
 import qualified Data.Map                      as M
 import           Data.Void                      ( Void )
@@ -43,22 +51,34 @@ linePoints (V2 p1 p2) = [ p1 + n *^ step | n <- [0 .. gcf] ]
 
 -- | Check if a line is perpendicular (i.e. vertical or horizontal)
 isPerp :: Line -> Bool
-isPerp (V2 p1 p2) = 0 `elem` (p2 - p1)
+isPerp (V2 (V2 x1 y1) (V2 x2 y2)) = x1 == x2 || y1 == y2
 
 -- | Create a map of elem -> frequency.
 getFreqs :: (Foldable f, Ord a) => f a -> Map a Int
 getFreqs = M.fromListWith (+) . map (, 1) . toList
 
-evalLines :: (Line -> Bool) -> [Line] -> Int
-evalLines filterFn =
-  M.size . M.filter (>= 2) . getFreqs . concatMap linePoints . filter filterFn
+-- Implementation using a Map
+evalLines :: [Line] -> Int
+evalLines = M.size . M.filter (>= 2) . getFreqs . (>>= linePoints)
+
+-- Slightly faster implementation using a 1000x1000 array.
+evalVec :: [Line] -> Int
+evalVec lines = runST $ do
+  a <- A.newArray ((0, 0), (1000, 1000)) 0 :: ST s (STUArray s (Int, Int) Int8)
+  for_
+    (lines >>= linePoints)
+    (\(V2 x y) -> do
+      v <- readArray a (x, y)
+      writeArray a (x, y) (v + 1)
+    )
+  cs <- getElems a
+  pure $ length . filter (>= 2) $ cs
 
 day05a :: Solution [Line] Int
-day05a =
-  Solution { sParse = parse, sShow = show, sSolve = Right . evalLines isPerp }
+day05a = Solution { sParse = parse
+                  , sShow  = show
+                  , sSolve = Right . evalVec . filter isPerp
+                  }
 
 day05b :: Solution [Line] Int
-day05b = Solution { sParse = parse
-                  , sShow  = show
-                  , sSolve = Right . evalLines (const True)
-                  }
+day05b = Solution { sParse = parse, sShow = show, sSolve = Right . evalVec }
