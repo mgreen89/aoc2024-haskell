@@ -1,6 +1,3 @@
-{-# LANGUAGE PartialTypeSignatures #-}
-{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
-
 module AoC.Challenge.Day08
   ( day08a
   , day08b
@@ -19,9 +16,6 @@ import           Data.Map                       ( Map )
 import qualified Data.Map                      as M
 import           Data.Set                       ( Set )
 import qualified Data.Set                      as S
-
-
-import           Debug.Trace
 
 day08aquick :: [String] -> Int
 day08aquick inp =
