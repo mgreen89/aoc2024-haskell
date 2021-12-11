@@ -10,15 +10,12 @@ import           AoC.Util                       ( Point
                                                 , parseMap
                                                 )
 import           Control.Monad                  ( mfilter )
-import           Data.Foldable                  ( toList )
 import           Data.List                      ( sort )
 import           Data.Map                       ( Map )
 import qualified Data.Map                      as M
 import           Data.Maybe                     ( listToMaybe
                                                 , mapMaybe
                                                 )
-import           Linear.V2                      ( V2(..) )
-import           Text.Read                      ( readEither )
 
 isLow :: Map Point Int -> (Point, Int) -> Bool
 isLow m (p, v) = all isLowerThan (cardinalNeighbours p)

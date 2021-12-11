@@ -40,7 +40,7 @@ checkChar stack c
 checkLine :: String -> Either Int [Char]
 checkLine = go []
  where
-  go stack [] = Right stack
+  go stack []         = Right stack
   go stack (c : rest) = case checkChar stack c of
     Left  i   -> Left $ parenCorruptScore i
     Right ci' -> go ci' rest

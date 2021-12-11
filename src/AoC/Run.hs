@@ -79,7 +79,7 @@ mainSubmit
   -> m (Text, SubmitRes)
 mainSubmit cfg@Config {..} SubmitOpts {..} = do
   sessKey <- maybeToEither ["ERROR: Session Key required to submit"] _cfgSession
-  let ChallengeSpec {..}  = _soSpec
+  let ChallengeSpec {..} = _soSpec
   cd@ChallengeData {..} <- liftIO $ challengeData cfg _soSpec
   dps <- liftEither . first (: []) . getDay challengeMap $ _csDay
   sol                   <- liftEither . first (: []) . getPart dps $ _csPart
@@ -98,7 +98,7 @@ mainSubmit cfg@Config {..} SubmitOpts {..} = do
     $ runSomeSolution sol inp
   liftIO $ printf "Submitting solution %s\n" res
 
-  let opts = defaultAoCOpts _cfgYear sessKey
+  let opts   = defaultAoCOpts _cfgYear sessKey
       submit = runAoC opts (AoCSubmit _csDay _csPart res)
   output@(_, status) <- liftEither . first showAoCError =<< liftIO submit
 

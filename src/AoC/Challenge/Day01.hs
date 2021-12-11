@@ -7,8 +7,7 @@ import           AoC.Solution
 
 
 countIncreases :: Int -> [Int] -> Int
-countIncreases gap xs =
-  length $ filter id $ zipWith (<) xs (drop gap xs)
+countIncreases gap xs = length $ filter id $ zipWith (<) xs (drop gap xs)
 
 
 day01a :: Solution [Int] Int

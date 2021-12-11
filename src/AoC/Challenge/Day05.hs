@@ -10,12 +10,8 @@ import           Control.Monad.ST               ( ST
 import           Data.Array.MArray             as A
 import           Data.Array.ST                 as A
 import           Data.Bifunctor                 ( first )
-import           Data.Foldable                  ( for_
-                                                , toList
-                                                )
+import           Data.Foldable                  ( for_ )
 import           Data.Int                       ( Int8 )
-import           Data.Map                       ( Map )
-import qualified Data.Map                      as M
 import           Data.Void                      ( Void )
 import           Linear.V2                      ( V2(..) )
 import           Linear.Vector                  ( (*^) )
@@ -53,20 +49,12 @@ linePoints (V2 p1 p2) = [ p1 + n *^ step | n <- [0 .. gcf] ]
 isPerp :: Line -> Bool
 isPerp (V2 (V2 x1 y1) (V2 x2 y2)) = x1 == x2 || y1 == y2
 
--- | Create a map of elem -> frequency.
-getFreqs :: (Foldable f, Ord a) => f a -> Map a Int
-getFreqs = M.fromListWith (+) . map (, 1) . toList
-
--- Implementation using a Map
-evalLines :: [Line] -> Int
-evalLines = M.size . M.filter (>= 2) . getFreqs . (>>= linePoints)
-
--- Slightly faster implementation using a 1000x1000 array.
+-- Slightly faster to use a 1000x1000 array than a map.
 evalVec :: [Line] -> Int
-evalVec lines = runST $ do
+evalVec ls = runST $ do
   a <- A.newArray ((0, 0), (1000, 1000)) 0 :: ST s (STUArray s (Int, Int) Int8)
   for_
-    (lines >>= linePoints)
+    (ls >>= linePoints)
     (\(V2 x y) -> do
       v <- readArray a (x, y)
       writeArray a (x, y) (v + 1)

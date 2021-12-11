@@ -6,7 +6,7 @@ module AoC.Challenge.Day06
 import           AoC.Solution
 import           Control.Monad                  ( (<=<) )
 import           Data.IntMap                    ( IntMap )
-import           Data.IntMap                   as M
+import qualified Data.IntMap                   as M
 import           Data.List                      ( iterate' )
 import           Data.List.Split                ( splitOn )
 import           Text.Read                      ( readEither )

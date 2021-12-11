@@ -9,20 +9,14 @@ import           AoC.Util                       ( Point
                                                 , getFreqs
                                                 , parseMap
                                                 )
-import           Data.Foldable                  ( find
-                                                , toList
-                                                )
-import           Data.List                      ( scanl'
-                                                , unfoldr
-                                                )
+import           Data.Foldable                  ( find )
+import           Data.List                      ( unfoldr )
 
 import           Data.Map                       ( Map )
 import qualified Data.Map                      as M
 import           Data.Maybe                     ( fromJust )
 import           Data.Set                       ( Set )
 import qualified Data.Set                      as S
-import           Linear.V2                      ( V2(..) )
-import           Text.Read                      ( readEither )
 
 type EnergyMap = Map Point Int
 type FlashSet = Set Point

@@ -4,10 +4,7 @@ module AoC.Challenge.Day08
   ) where
 
 import           AoC.Solution
-import           Data.Bifunctor                 ( first
-                                                , second
-                                                )
-import           Data.Char                      ( isSpace )
+import           Data.Bifunctor                 ( first )
 import           Data.List                      ( foldl'
                                                 , sort
                                                 )
@@ -96,18 +93,17 @@ parseDisplay =
     . splitOn " | "
 
 findRealDigits :: Set Digit -> Map Digit Int
-findRealDigits digits =
-  let segCounts = segmentCount $ S.elems digits
+findRealDigits ds =
+  let segCounts = segmentCount $ S.elems ds
   in  M.fromList
         . fmap (\c -> (c, digitFingerprints M.! digitFingerprint segCounts c))
-        $ S.elems digits
+        $ S.elems ds
 
 getValue :: Map Digit Int -> [Digit] -> Int
 getValue m = foldl' go 0 where go tot d = tot * 10 + (m M.! d)
 
 getDisplayValue :: (Set Digit, [Digit]) -> Int
-getDisplayValue (dgts, disp) =
-  getValue (findRealDigits dgts) disp
+getDisplayValue (dgts, disp) = getValue (findRealDigits dgts) disp
 
 day08b :: Solution [(Set Digit, [Digit])] Int
 day08b = Solution { sParse = Right . fmap parseDisplay . lines

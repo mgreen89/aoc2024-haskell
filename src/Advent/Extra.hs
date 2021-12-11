@@ -22,7 +22,7 @@ showAoCError = \case
 -- | Convert a 'SubmitRes' to a human-readable string description.
 showAoCSubmitRes :: SubmitRes -> String
 showAoCSubmitRes = \case
-  SubCorrect Nothing -> "Answer was correct!"
+  SubCorrect Nothing  -> "Answer was correct!"
   SubCorrect (Just r) -> printf
     "Answer was correct, and you made the global leaderboard at rank %d !!"
     r

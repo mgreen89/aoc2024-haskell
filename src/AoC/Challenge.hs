@@ -77,24 +77,24 @@ challengeMap =
 -- | List of all the completed solutions.
 solutionList :: [(Day, (Part, SomeSolution))]
 solutionList =
-  [ (mkDay_ 1, (Part1, SomeSolution day01a))
-  , (mkDay_ 1, (Part2, SomeSolution day01b))
-  , (mkDay_ 2, (Part1, SomeSolution day02a))
-  , (mkDay_ 2, (Part2, SomeSolution day02b))
-  , (mkDay_ 3, (Part1, SomeSolution day03a))
-  , (mkDay_ 3, (Part2, SomeSolution day03b))
-  , (mkDay_ 4, (Part1, SomeSolution day04a))
-  , (mkDay_ 4, (Part2, SomeSolution day04b))
-  , (mkDay_ 5, (Part1, SomeSolution day05a))
-  , (mkDay_ 5, (Part2, SomeSolution day05b))
-  , (mkDay_ 6, (Part1, SomeSolution day06a))
-  , (mkDay_ 6, (Part2, SomeSolution day06b))
-  , (mkDay_ 7, (Part1, SomeSolution day07a))
-  , (mkDay_ 7, (Part2, SomeSolution day07b))
-  , (mkDay_ 8, (Part1, SomeSolution day08a))
-  , (mkDay_ 8, (Part2, SomeSolution day08b))
-  , (mkDay_ 9, (Part1, SomeSolution day09a))
-  , (mkDay_ 9, (Part2, SomeSolution day09b))
+  [ (mkDay_ 1 , (Part1, SomeSolution day01a))
+  , (mkDay_ 1 , (Part2, SomeSolution day01b))
+  , (mkDay_ 2 , (Part1, SomeSolution day02a))
+  , (mkDay_ 2 , (Part2, SomeSolution day02b))
+  , (mkDay_ 3 , (Part1, SomeSolution day03a))
+  , (mkDay_ 3 , (Part2, SomeSolution day03b))
+  , (mkDay_ 4 , (Part1, SomeSolution day04a))
+  , (mkDay_ 4 , (Part2, SomeSolution day04b))
+  , (mkDay_ 5 , (Part1, SomeSolution day05a))
+  , (mkDay_ 5 , (Part2, SomeSolution day05b))
+  , (mkDay_ 6 , (Part1, SomeSolution day06a))
+  , (mkDay_ 6 , (Part2, SomeSolution day06b))
+  , (mkDay_ 7 , (Part1, SomeSolution day07a))
+  , (mkDay_ 7 , (Part2, SomeSolution day07b))
+  , (mkDay_ 8 , (Part1, SomeSolution day08a))
+  , (mkDay_ 8 , (Part2, SomeSolution day08b))
+  , (mkDay_ 9 , (Part1, SomeSolution day09a))
+  , (mkDay_ 9 , (Part2, SomeSolution day09b))
   , (mkDay_ 10, (Part1, SomeSolution day10a))
   , (mkDay_ 10, (Part2, SomeSolution day10b))
   , (mkDay_ 11, (Part1, SomeSolution day11a))
@@ -104,8 +104,7 @@ solutionList =
 -- | Get a map of the completed solution parts for the given day.
 getDay :: ChallengeMap -> Day -> Either String (Map Part SomeSolution)
 getDay cm d =
-  maybeToEither (printf "Day not yet available: %d" (dayInt d))
-    $ M.lookup d cm
+  maybeToEither (printf "Day not yet available: %d" (dayInt d)) $ M.lookup d cm
 
 -- | Get the solution to the given part.
 getPart :: Map Part SomeSolution -> Part -> Either String SomeSolution

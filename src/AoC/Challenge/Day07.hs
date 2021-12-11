@@ -23,7 +23,7 @@ calcTri tgt = sum . fmap (tri . abs . subtract tgt)
 -- Find the integer floor and ceiling of the mean.
 mean :: [Int] -> [Int]
 mean xs =
-  let fracMean = fromIntegral (sum xs) / fromIntegral (length xs)
+  let fracMean = fromIntegral (sum xs) / fromIntegral (length xs) :: Double
   in  [floor fracMean, ceiling fracMean]
 
 -- Find the integer floor and ceiling of the median.
