@@ -9,9 +9,11 @@ module AoC.Challenge.Day11
 import           AoC.Solution
 import           Data.Foldable                  ( toList )
 import           Data.Foldable
+import           Data.List                      ( unfoldr )
 import           Data.List.Split
 import           Data.Map                       ( Map )
 import qualified Data.Map                      as M
+import           Data.Maybe
 import           Data.Set                       ( Set )
 import qualified Data.Set                      as S
 import           Linear.V2                      ( V2(..) )
@@ -77,5 +79,26 @@ day11a = Solution
   , sSolve = Right . sum . fst . (!! 100) . iterate step . (M.empty, )
   }
 
-day11b :: Solution _ _
-day11b = Solution { sParse = Right, sShow = show, sSolve = Right }
+
+-- Rum a step.
+-- This takes just the energy level map, and generates a tuple of
+-- (flash set, energy level map) for the given step.
+step' :: Map Point Int -> (Set Point, Map Point Int)
+step' m =
+  let (flashed, m') = flashAll (S.empty, fmap (+ 1) m)
+      retM          = M.union m' (M.fromSet (const 0) flashed)
+  in  (flashed, retM)
+
+day11b :: Solution (Map Point Int) Int
+day11b = Solution
+  { sParse = parseMap
+  , sShow  = show
+  , sSolve = \m ->
+               Right
+                 . fst
+                 . fromJust
+                 . find (\(i, f) -> M.keysSet m == f)
+                 . zip [1 ..]
+                 . unfoldr (Just . step')
+                 $ m
+  }
