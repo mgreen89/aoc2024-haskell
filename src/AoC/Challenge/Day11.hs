@@ -1,28 +1,28 @@
-{-# LANGUAGE PartialTypeSignatures #-}
-{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
-
 module AoC.Challenge.Day11
   ( day11a
   , day11b
   ) where
 
 import           AoC.Solution
-import           Data.Foldable                  ( toList )
-import           Data.Foldable
-import           Data.List                      ( unfoldr )
-import           Data.List.Split
+import           Data.Foldable                  ( find
+                                                , toList
+                                                )
+import           Data.List                      ( scanl'
+                                                , unfoldr
+                                                )
+
 import           Data.Map                       ( Map )
 import qualified Data.Map                      as M
-import           Data.Maybe
+import           Data.Maybe                     ( fromJust )
 import           Data.Set                       ( Set )
 import qualified Data.Set                      as S
 import           Linear.V2                      ( V2(..) )
 import           Text.Read                      ( readEither )
 
-
-import           Debug.Trace
-
 type Point = V2 Int
+
+type EnergyMap = Map Point Int
+type FlashSet = Set Point
 
 parseMap :: String -> Either String (Map Point Int)
 parseMap = fmap createMap . traverse (traverse (readEither . pure)) . lines
@@ -41,34 +41,33 @@ neighbours p =
 getFreqs :: (Foldable f, Ord a) => f a -> Map a Int
 getFreqs = M.fromListWith (+) . map (, 1) . toList
 
--- Rum a step.
--- This takes and generates a tuple of (flash count map, energy level map)
-step :: (Map Point Int, Map Point Int) -> (Map Point Int, Map Point Int)
-step (cs, m) =
-  let (flashed, m') = flashAll (S.empty, fmap (+ 1) m)
-      retF          = M.unionWith (+) cs (M.fromSet (const 1) flashed)
-      retM          = M.union m' (M.fromSet (const 0) flashed)
-  in  (retF, retM)
+-- Run a single step.
+-- Add one to all energy values, and the run all the flashes.
+-- Returns the set of all flashed octopuses and the new energy map.
+step :: EnergyMap -> (FlashSet, EnergyMap)
+step e =
+  let (f, e') = flashAll . fmap (+ 1) $ e
+  in  (f, M.union e' (M.fromSet (const 0) f))
 
-flashAll :: (Set Point, Map Point Int) -> (Set Point, Map Point Int)
-flashAll (flashed, energy) =
-  let (newFlashed, energy') = flash energy
-  in  if S.null newFlashed
-        then (flashed, energy')
-        else flashAll (S.union flashed newFlashed, energy')
+-- Run all the possible flashes at this state.
+-- Returns the set of flashed octopuses, and updated energy map (that
+-- doesn't include octpuses that flashed).
+flashAll :: EnergyMap -> (FlashSet, EnergyMap)
+flashAll = go S.empty
+ where
+  go :: FlashSet -> EnergyMap -> (FlashSet, EnergyMap)
+  go f e =
+    let (f', e') = flash e
+    in  if S.null f' then (f, e') else go (S.union f f') e'
 
-
-showMap :: Map Point Int -> String
-showMap = unlines . chunksOf 10 . concatMap show . M.elems
-
--- Run all the flashes at the current state.
-flash :: Map Point Int -> (Set Point, Map Point Int)
+-- Run run flashes that are ready, and update the energy map.
+-- The new energy map does not contain values for octpuses that flashed so
+-- they don't flash again this cycle.
+flash :: EnergyMap -> (FlashSet, EnergyMap)
 flash m =
   let (ready, notReady) = M.partition (> 9) m
-      -- Increment all the neighbours of the ready ones.
-      readyKeys         = M.keysSet ready
       neighbourFlashes  = getFreqs $ neighbours =<< M.keys ready
-  in  ( readyKeys
+  in  ( M.keysSet ready
       , M.restrictKeys (M.unionWith (+) m neighbourFlashes) (M.keysSet notReady)
       )
 
@@ -76,18 +75,8 @@ day11a :: Solution (Map Point Int) Int
 day11a = Solution
   { sParse = parseMap
   , sShow  = show
-  , sSolve = Right . sum . fst . (!! 100) . iterate step . (M.empty, )
+  , sSolve = Right . sum . fmap S.size . take 100 . unfoldr (Just . step)
   }
-
-
--- Rum a step.
--- This takes just the energy level map, and generates a tuple of
--- (flash set, energy level map) for the given step.
-step' :: Map Point Int -> (Set Point, Map Point Int)
-step' m =
-  let (flashed, m') = flashAll (S.empty, fmap (+ 1) m)
-      retM          = M.union m' (M.fromSet (const 0) flashed)
-  in  (flashed, retM)
 
 day11b :: Solution (Map Point Int) Int
 day11b = Solution
@@ -97,8 +86,8 @@ day11b = Solution
                Right
                  . fst
                  . fromJust
-                 . find (\(i, f) -> M.keysSet m == f)
+                 . find ((M.keysSet m ==) . snd)
                  . zip [1 ..]
-                 . unfoldr (Just . step')
+                 . unfoldr (Just . step)
                  $ m
   }
