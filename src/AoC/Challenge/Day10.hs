@@ -29,9 +29,9 @@ other '>' = '<'
 other x   = error $ "Invalid paren: " <> pure x
 
 checkChar :: [Char] -> Char -> Either Char [Char]
-checkChar stack c = if isOpen c
-  then Right $ c : stack
-  else case stack of
+checkChar stack c
+  | isOpen c = Right $ c : stack
+  | otherwise = case stack of
     c' : rest | c' == other c -> Right rest
     _                         -> Left c
   where isOpen = flip elem ['(', '[', '{', '<']
@@ -40,11 +40,10 @@ checkChar stack c = if isOpen c
 checkLine :: String -> Either Int [Char]
 checkLine = go []
  where
-  go stack cs = case cs of
-    (c : rest) -> case checkChar stack c of
-      Left  i   -> Left $ parenCorruptScore i
-      Right ci' -> go ci' rest
-    _ -> Right stack
+  go stack [] = Right stack
+  go stack (c : rest) = case checkChar stack c of
+    Left  i   -> Left $ parenCorruptScore i
+    Right ci' -> go ci' rest
 
 day10a :: Solution [String] Int
 day10a = Solution { sParse = Right . lines

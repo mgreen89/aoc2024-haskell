@@ -4,6 +4,11 @@ module AoC.Challenge.Day09
   ) where
 
 import           AoC.Solution
+import           AoC.Util                       ( Point
+                                                , cardinalNeighbours
+                                                , getFreqs
+                                                , parseMap
+                                                )
 import           Control.Monad                  ( mfilter )
 import           Data.Foldable                  ( toList )
 import           Data.List                      ( sort )
@@ -15,24 +20,8 @@ import           Data.Maybe                     ( listToMaybe
 import           Linear.V2                      ( V2(..) )
 import           Text.Read                      ( readEither )
 
-type Point = V2 Int
-
-parseMap :: String -> Either String (Map Point Int)
-parseMap = fmap createMap . traverse (traverse (readEither . pure)) . lines
- where
-  createMap :: [[Int]] -> Map Point Int
-  createMap = M.fromList . concat . zipWith
-    (\y -> zipWith (\x -> (V2 x y :: Point, )) [0 ..])
-    [0 ..]
-
-cardinalNeighbours :: [Point]
-cardinalNeighbours = [V2 0 1, V2 0 (-1), V2 1 0, V2 (-1) 0]
-
-getNeighbours :: Point -> [Point]
-getNeighbours p = (+ p) <$> cardinalNeighbours
-
 isLow :: Map Point Int -> (Point, Int) -> Bool
-isLow m (p, v) = all isLowerThan (getNeighbours p)
+isLow m (p, v) = all isLowerThan (cardinalNeighbours p)
  where
   isLowerThan q = case M.lookup q m of
     Nothing -> True
@@ -54,16 +43,12 @@ slopeMap m = M.mapWithKey go m
  where
   go p v = if v > 8
     then Nothing
-    else listToMaybe . mapMaybe filt $ getNeighbours p
+    else listToMaybe . mapMaybe filt $ cardinalNeighbours p
    where
     -- If the point has a height of less than p, get the point
     -- (and not the height!)
     filt :: Point -> Maybe Point
     filt q = q <$ mfilter (< v) (M.lookup q m)
-
--- | Create a map of elem -> frequency.
-getFreqs :: (Foldable f, Ord a) => f a -> Map a Int
-getFreqs = M.fromListWith (+) . map (, 1) . toList
 
 -- Create map of basin lowest-point to basin size.
 getBasins :: Map Point Int -> Map Point Int

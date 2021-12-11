@@ -4,6 +4,11 @@ module AoC.Challenge.Day11
   ) where
 
 import           AoC.Solution
+import           AoC.Util                       ( Point
+                                                , allNeighbours
+                                                , getFreqs
+                                                , parseMap
+                                                )
 import           Data.Foldable                  ( find
                                                 , toList
                                                 )
@@ -19,27 +24,8 @@ import qualified Data.Set                      as S
 import           Linear.V2                      ( V2(..) )
 import           Text.Read                      ( readEither )
 
-type Point = V2 Int
-
 type EnergyMap = Map Point Int
 type FlashSet = Set Point
-
-parseMap :: String -> Either String (Map Point Int)
-parseMap = fmap createMap . traverse (traverse (readEither . pure)) . lines
- where
-  createMap :: [[Int]] -> Map Point Int
-  createMap = M.fromList . concat . zipWith
-    (\y -> zipWith (\x -> (V2 x y :: Point, )) [0 ..])
-    [0 ..]
-
-neighbours
-  :: (Traversable t, Applicative t, Num a, Num (t a), Eq (t a)) => t a -> [t a]
-neighbours p =
-  [ p + delta | delta <- sequence (pure [-1, 0, 1]), delta /= pure 0 ]
-
--- | Create a map of elem -> frequency.
-getFreqs :: (Foldable f, Ord a) => f a -> Map a Int
-getFreqs = M.fromListWith (+) . map (, 1) . toList
 
 -- Run a single step.
 -- Add one to all energy values, and the run all the flashes.
@@ -66,7 +52,7 @@ flashAll = go S.empty
 flash :: EnergyMap -> (FlashSet, EnergyMap)
 flash m =
   let (ready, notReady) = M.partition (> 9) m
-      neighbourFlashes  = getFreqs $ neighbours =<< M.keys ready
+      neighbourFlashes  = getFreqs $ allNeighbours =<< M.keys ready
   in  ( M.keysSet ready
       , M.restrictKeys (M.unionWith (+) m neighbourFlashes) (M.keysSet notReady)
       )
