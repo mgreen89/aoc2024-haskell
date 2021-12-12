@@ -99,6 +99,8 @@ solutionList =
   , (mkDay_ 10, (Part2, SomeSolution day10b))
   , (mkDay_ 11, (Part1, SomeSolution day11a))
   , (mkDay_ 11, (Part2, SomeSolution day11b))
+  , (mkDay_ 12, (Part1, SomeSolution day12a))
+  , (mkDay_ 12, (Part2, SomeSolution day12b))
   ]
 
 -- | Get a map of the completed solution parts for the given day.
