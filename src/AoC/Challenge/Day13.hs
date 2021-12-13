@@ -1,6 +1,3 @@
-{-# LANGUAGE PartialTypeSignatures #-}
-{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
-
 module AoC.Challenge.Day13
   ( day13a
   , day13b
@@ -8,7 +5,7 @@ module AoC.Challenge.Day13
 
 import           AoC.Solution
 import           AoC.Util                       ( Point )
-import           Data.Bifunctor                 ( first )
+import           Data.Foldable                  ( foldl' )
 import           Data.List.Split                ( splitOn )
 import           Data.Set                       ( Set )
 import qualified Data.Set                      as S
@@ -20,7 +17,7 @@ type Fold = Point
 
 listTo2Tuple :: [a] -> Either String (a, a)
 listTo2Tuple [a, b] = Right (a, b)
-listTo2Tuple x      = Left "Not a 2-elem list"
+listTo2Tuple _      = Left "Not a 2-elem list"
 
 parse :: String -> Either String ([Dot], [Fold])
 parse inp = do
@@ -64,5 +61,20 @@ day13a = Solution
   , sSolve = \(ds, fs) -> Right . S.size . runFold (head fs) . S.fromList $ ds
   }
 
-day13b :: Solution _ _
-day13b = Solution { sParse = Right, sShow = show, sSolve = Right }
+showDots :: Set Point -> String
+showDots s =
+  let xMax = maximum $ (\(V2 x _) -> x) <$> S.elems s
+      yMax = maximum $ (\(V2 _ y) -> y) <$> S.elems s
+  in  foldMap
+        (\y ->
+          foldMap (\x -> if S.member (V2 x y) s then "#" else ".") [0 .. xMax]
+            <> "\n"
+        )
+        [0 .. yMax]
+
+day13b :: Solution ([Dot], [Fold]) (Set Dot)
+day13b = Solution
+  { sParse = parse
+  , sShow  = \s -> "\n" <> showDots s
+  , sSolve = Right . \(ds, fs) -> foldl' (flip runFold) (S.fromList ds) fs
+  }
