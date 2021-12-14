@@ -12,8 +12,8 @@ import           Data.List.Split                ( splitOn )
 import           Text.Read                      ( readEither )
 
 -- Get an IntMap of integer frequency.
-getFreqs :: [Int] -> IntMap Int
-getFreqs = M.fromListWith (+) . fmap (, 1)
+freqs :: [Int] -> IntMap Int
+freqs = M.fromListWith (+) . fmap (, 1)
 
 stepCount :: (Int, Int) -> [(Int, Int)]
 stepCount (0, n) = [(6, n), (8, n)]
@@ -24,7 +24,7 @@ countAfter days =
   sum
     . (!! days)
     . iterate' (M.fromListWith (+) . (stepCount <=< M.toList))
-    . getFreqs
+    . freqs
 
 
 day06a :: Solution [Int] Int

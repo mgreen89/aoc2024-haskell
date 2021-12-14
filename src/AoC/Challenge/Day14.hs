@@ -9,15 +9,13 @@ module AoC.Challenge.Day14
   ) where
 
 import           AoC.Solution
-import           AoC.Util                       ( getFreqs )
+import           AoC.Util                       ( freqs
+                                                , listTo2Tuple
+                                                )
 import           Data.Foldable                  ( foldl' )
 import           Data.List.Split                ( splitOn )
 import           Data.Map                       ( Map )
 import qualified Data.Map                      as M
-
-listTo2Tuple :: [a] -> Either String (a, a)
-listTo2Tuple [a, b] = Right (a, b)
-listTo2Tuple _      = Left "Not a 2-elem list"
 
 parse :: String -> Either String (String, [(String, Char)])
 parse inp = do
@@ -37,7 +35,7 @@ partA :: (String, [(String, Char)]) -> Int
 partA (tmpl, ins) =
   let insMap     = M.fromList ins
       fullChain  = (!! 10) . iterate (polyStep insMap) $ tmpl
-      fullCounts = getFreqs fullChain
+      fullCounts = freqs fullChain
   in  maximum (M.elems fullCounts) - minimum (M.elems fullCounts)
 
 day14a :: Solution (String, [(String, Char)]) Int

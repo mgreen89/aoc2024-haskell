@@ -6,7 +6,7 @@ module AoC.Challenge.Day11
 import           AoC.Solution
 import           AoC.Util                       ( Point
                                                 , allNeighbours
-                                                , getFreqs
+                                                , freqs
                                                 , parseMap
                                                 )
 import           Data.Foldable                  ( find )
@@ -46,7 +46,7 @@ flashAll = go S.empty
 flash :: EnergyMap -> (FlashSet, EnergyMap)
 flash m =
   let (ready, notReady) = M.partition (> 9) m
-      neighbourFlashes  = getFreqs $ allNeighbours =<< M.keys ready
+      neighbourFlashes  = freqs $ allNeighbours =<< M.keys ready
   in  ( M.keysSet ready
       , M.restrictKeys (M.unionWith (+) m neighbourFlashes) (M.keysSet notReady)
       )

@@ -3,11 +3,12 @@ module AoC.Util
   , cardinalNeighbours
   , allNeighbours
   , parseMap
-  , getFreqs
+  , freqs
   , strip
   , stripNewlines
   , eitherToMaybe
   , maybeToEither
+  , listTo2Tuple
   , withColor
   ) where
 
@@ -61,8 +62,8 @@ parseMap = fmap createMap . traverse (traverse (readEither . pure)) . lines
 --------------------------------------
 
 -- | Create a frequency map.
-getFreqs :: (Foldable f, Ord a) => f a -> Map a Int
-getFreqs = M.fromListWith (+) . fmap (, 1) . toList
+freqs :: (Foldable f, Ord a) => f a -> Map a Int
+freqs = M.fromListWith (+) . fmap (, 1) . toList
 
 --------------------------------------
 -- Parsing and string handling
@@ -77,7 +78,7 @@ stripNewlines :: String -> String
 stripNewlines = reverse . dropWhile (== '\n') . reverse
 
 --------------------------------------
--- Helpers
+-- Conversions
 --------------------------------------
 
 -- | Convert an 'Either' into a 'Maybe' (or any other 'Alternative' instance),
@@ -90,6 +91,10 @@ eitherToMaybe = either (const empty) pure
 maybeToEither :: MonadError e m => e -> Maybe a -> m a
 maybeToEither e = maybe (throwError e) pure
 
+-- | Safely convert a list to a 2-tuple of the elements.
+listTo2Tuple :: [a] -> Either String (a, a)
+listTo2Tuple [a, b] = Right (a, b)
+listTo2Tuple _      = Left "Not a 2-elem list"
 
 --------------------------------------
 -- Output

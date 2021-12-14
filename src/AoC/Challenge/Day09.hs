@@ -6,7 +6,7 @@ module AoC.Challenge.Day09
 import           AoC.Solution
 import           AoC.Util                       ( Point
                                                 , cardinalNeighbours
-                                                , getFreqs
+                                                , freqs
                                                 , parseMap
                                                 )
 import           Control.Monad                  ( mfilter )
@@ -56,7 +56,7 @@ getBasins m =
       go p l = case l of
         Just q  -> pointToBasinFloor M.! q
         Nothing -> p
-  in  getFreqs pointToBasinFloor
+  in  freqs pointToBasinFloor
 
 day09b :: Solution (Map Point Int) Int
 day09b = Solution

@@ -4,7 +4,7 @@ module AoC.Challenge.Day13
   ) where
 
 import           AoC.Solution
-import           AoC.Util                       ( Point )
+import           AoC.Util                       ( Point, listTo2Tuple )
 import           Data.Foldable                  ( foldl' )
 import           Data.List.Split                ( splitOn )
 import           Data.Set                       ( Set )
@@ -14,10 +14,6 @@ import           Text.Read                      ( readEither )
 
 type Dot = Point
 type Fold = Point
-
-listTo2Tuple :: [a] -> Either String (a, a)
-listTo2Tuple [a, b] = Right (a, b)
-listTo2Tuple _      = Left "Not a 2-elem list"
 
 parse :: String -> Either String ([Dot], [Fold])
 parse inp = do

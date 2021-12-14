@@ -6,7 +6,6 @@ module AoC.Challenge.Day12
 import           AoC.Solution
 import           Control.Monad                  ( guard )
 import           Data.Char                      ( isLower )
-import           Data.List                      ( partition )
 import           Data.List.Split                ( splitOn )
 import           Data.Map                       ( Map )
 import qualified Data.Map                      as M
