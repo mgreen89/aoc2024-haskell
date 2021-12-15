@@ -10,23 +10,14 @@ import           AoC.Util                       ( Point
                                                 , cardinalNeighbours
                                                 , parseMap
                                                 )
-import           Data.Foldable                  ( minimumBy )
 import           Data.List                      ( sortOn )
 import           Data.Map                       ( Map )
 import qualified Data.Map                      as M
 import           Data.Maybe                     ( maybeToList )
-import           Data.Set                       ( Set )
-import qualified Data.Set                      as S
 import           Linear.V2                      ( V2(..) )
 import           Linear.Vector                  ( (*^)
                                                 , zero
                                                 )
-
-import           Data.Foldable                  ( for_ )
-import           Data.Maybe
-import           Debug.Trace
-import           System.IO.Unsafe
-import Text.Printf
 
 dijkstra
   :: forall a
@@ -34,12 +25,12 @@ dijkstra
   => Map Point a -- ^ Costs
   -> Point       -- ^ Start
   -> Point       -- ^ Destination
-  -> (a, Map Point a)           -- ^ Final cost
+  -> a           -- ^ Total cost
 dijkstra costs start dest = go M.empty (M.singleton start 0)
  where
-  go :: Map Point a -> Map Point a -> (a, Map Point a)
+  go :: Map Point a -> Map Point a -> a
   go visited unvisited = case M.lookup dest visited of
-    Just x  -> (x, visited)
+    Just x  -> x
     Nothing -> uncurry go $ step (visited, unvisited)
 
   step :: (Map Point a, Map Point a) -> (Map Point a, Map Point a)
@@ -64,7 +55,7 @@ dijkstra costs start dest = go M.empty (M.singleton start 0)
       ]
 
 walkPath :: Map Point Int -> Int
-walkPath m = fst $ dijkstra m zero (maximum (M.keys m))
+walkPath m = dijkstra m zero (maximum (M.keys m))
 
 day15a :: Solution (Map Point Int) Int
 day15a =
@@ -73,8 +64,8 @@ day15a =
 walkTiled :: Map Point Int -> Int
 walkTiled m =
   let
-    xMax = maximum . fmap (\(V2 x _) -> x) $ M.keys m
-    yMax = maximum . fmap (\(V2 _ y) -> y) $ M.keys m
+    -- Add one to get the side lengths as the points are zero-indexed.
+    (V2 xMax yMax) = V2 1 1 + maximum (M.keys m)
     incX = V2 xMax 0
     incY = V2 0 yMax
 
@@ -91,22 +82,9 @@ walkTiled m =
       , j <- [0 .. 4]
       ]
 
-    (r, v) = dijkstra (printMap tiledMap) zero ((incX + incY) * 5)
+    target = maximum (M.keys tiledMap)
   in
-    printMap v M.! ((5 *^ incX) + (5 *^ incY))
-
-printMap :: Map Point Int -> Map Point Int
-printMap m =
-  let xMax = maximum . fmap (\(V2 x _) -> x) $ M.keys m
-      yMax = maximum . fmap (\(V2 _ y) -> y) $ M.keys m
-  in  unsafePerformIO $ do
-        for_
-          [0 .. yMax]
-          (\y -> do
-            for_ [0 .. xMax] (\x -> printf "%d" (m M.! V2 x y))
-            putStr "\n"
-          )
-        pure m
+    dijkstra tiledMap zero target
 
 day15b :: Solution (Map Point Int) Int
 day15b =
