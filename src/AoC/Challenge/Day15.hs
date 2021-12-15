@@ -3,6 +3,8 @@
 {-# LANGUAGE PartialTypeSignatures #-}
 {-# OPTIONS_GHC -Wno-partial-type-signatures #-}
 
+{-# LANGUAGE ScopedTypeVariables #-}
+
 module AoC.Challenge.Day15
   ( day15a
   -- , day15b
@@ -22,37 +24,43 @@ import           Data.Set                       ( Set )
 import qualified Data.Set                      as S
 import           Linear.Vector                  ( zero )
 
-walkPath :: Map Point Int -> Int
-walkPath m = dijkstra (M.singleton zero 0)
+dijkstra
+  :: forall a
+   . (Ord a, Num a)
+  => Map Point a -- ^ Costs
+  -> Point       -- ^ Start
+  -> Point       -- ^ Destination
+  -> a           -- ^ Final cost
+dijkstra costs start dest = go M.empty (M.singleton start 0)
  where
-  target :: Point
-  target = maximum (M.keys m)
+  go :: Map Point a -> Map Point a -> a
+  go visited unvisited = case M.lookup dest visited of
+    Just x  -> x
+    Nothing -> uncurry go $ step (visited, unvisited)
 
-  dijkstra :: Map Point Int -> Int
-  dijkstra pathCosts = go (pathCosts, S.empty)
+  step :: (Map Point a, Map Point a) -> (Map Point a, Map Point a)
+  step (v, uv) =
+    let curr@(currP, currV) = head . sortOn snd . M.toList $ uv
+        v'                  = M.insert currP currV v
+        uv'                 = M.delete currP uv
+    in 
+      -- Short circuit if the dest is the lowest unvisited.
+        if currP == dest
+          then (v', uv')
+          else (v', M.unionWith min uv' (M.fromList (calcNeighbs curr)))
    where
-    go (pc, v) = case M.lookup target pc of
-      Just x  -> x
-      Nothing -> go (dijkstraStep (pc, v))
+    calcNeighbs :: (Point, a) -> [(Point, a)]
+    calcNeighbs (p, c) =
+      [ (p', c + d)
+      | p' <- cardinalNeighbours p
+-- Only check neigbours that are not visited
+      , M.notMember p' v
+-- Only check neighbours that exist!
+      , d <- maybeToList (M.lookup p' costs)
+      ]
 
-  dijkstraStep :: (Map Point Int, Set Point) -> (Map Point Int, Set Point)
-  dijkstraStep (pc, v) =
-    -- Find the node with the minimum value.
-    let
-      curr =
-        head . sortOn snd . filter (\x -> S.notMember (fst x) v) . M.toList $ pc
-    in  ( M.unionWith min pc (M.fromList . dijkstraCalc pc v $ curr)
-        , S.insert (fst curr) v
-        )
-
-  dijkstraCalc :: Map Point Int -> Set Point -> (Point, Int) -> [(Point, Int)]
-  dijkstraCalc c v (p, s) =
-    [ (p', s + d)
-    | p' <- cardinalNeighbours p
-    , S.notMember p' v
-    , d <- maybeToList (M.lookup p' m)
-    , maybe True (> (s + d)) (M.lookup p' c)
-    ]
+walkPath :: Map Point Int -> Int
+walkPath m = dijkstra m zero (maximum (M.keys m))
 
 day15a :: Solution (Map Point Int) Int
 day15a =
