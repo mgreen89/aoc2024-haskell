@@ -10,10 +10,15 @@ import           AoC.Util                       ( Point
                                                 , cardinalNeighbours
                                                 , parseMap
                                                 )
+import           Data.Foldable                  ( foldl' )
 import           Data.List                      ( sortOn )
 import           Data.Map                       ( Map )
 import qualified Data.Map                      as M
-import           Data.Maybe                     ( maybeToList )
+import           Data.Maybe                     ( fromJust
+                                                , maybeToList
+                                                )
+import           Data.OrdPSQ                    ( OrdPSQ )
+import qualified Data.OrdPSQ                   as PSQ
 import           Linear.V2                      ( V2(..) )
 import           Linear.Vector                  ( (*^)
                                                 , zero
@@ -26,23 +31,28 @@ dijkstra
   -> Point       -- ^ Start
   -> Point       -- ^ Destination
   -> a           -- ^ Total cost
-dijkstra costs start dest = go M.empty (M.singleton start 0)
+dijkstra costs start dest = go M.empty (PSQ.singleton start 0 0)
  where
-  go :: Map Point a -> Map Point a -> a
+  go :: Map Point a -> OrdPSQ Point a a -> a
   go visited unvisited = case M.lookup dest visited of
     Just x  -> x
     Nothing -> uncurry go $ step (visited, unvisited)
 
-  step :: (Map Point a, Map Point a) -> (Map Point a, Map Point a)
+  step :: (Map Point a, OrdPSQ Point a a) -> (Map Point a, OrdPSQ Point a a)
   step (v, uv) =
-    let curr@(currP, currV) = head . sortOn snd . M.toList $ uv
-        v'                  = M.insert currP currV v
-        uv'                 = M.delete currP uv
+    let (currP, _, currV) = fromJust $ PSQ.findMin uv
+        v'                = M.insert currP currV v
+        uv'               = PSQ.deleteMin uv
     in 
       -- Short circuit if the dest is the lowest unvisited.
         if currP == dest
           then (v', uv')
-          else (v', M.unionWith min uv' (M.fromList (calcNeighbs curr)))
+          else
+            ( v'
+            , foldl' (\psq (n, v) -> PSQ.insert n v v psq)
+                     uv'
+                     (calcNeighbs (currP, currV))
+            )
    where
     calcNeighbs :: (Point, a) -> [(Point, a)]
     calcNeighbs (p, c) =
@@ -52,6 +62,8 @@ dijkstra costs start dest = go M.empty (M.singleton start 0)
       , M.notMember p' v
 -- Only check neighbours that exist!
       , d <- maybeToList (M.lookup p' costs)
+-- Only consider neighbours where the new path is lower cost.
+      , maybe True (\(_, v) -> c + d < v) (PSQ.lookup p' uv)
       ]
 
 walkPath :: Map Point Int -> Int
@@ -66,8 +78,8 @@ walkTiled m =
   let
     -- Add one to get the side lengths as the points are zero-indexed.
     (V2 xMax yMax) = V2 1 1 + maximum (M.keys m)
-    incX = V2 xMax 0
-    incY = V2 0 yMax
+    incX           = V2 xMax 0
+    incY           = V2 0 yMax
 
     tiledMap :: Map Point Int
     tiledMap = M.unions

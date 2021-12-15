@@ -41,6 +41,7 @@ dependencies:
 - pandoc
 - parser-combinators
 - primitive
+- psqueues
 - recursion-schemes
 - safe
 - split
