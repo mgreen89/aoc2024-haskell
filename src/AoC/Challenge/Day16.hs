@@ -1,16 +1,17 @@
-{-# OPTIONS_GHC -Wno-unused-imports   #-}
-{-# OPTIONS_GHC -Wno-unused-top-binds #-}
-{-# LANGUAGE PartialTypeSignatures #-}
-{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
-
 module AoC.Challenge.Day16
   ( day16a
-  -- , day16b
+  , day16b
   ) where
 
 import           AoC.Solution
+import           Control.DeepSeq                ( NFData )
+import           Control.Monad.RWS              ( Product )
 import           Data.Bifunctor                 ( first )
 import           Data.Foldable                  ( foldl' )
+import           Data.Functor.Foldable          ( cata )
+import           Data.Functor.Foldable.TH       ( makeBaseFunctor )
+import           GHC.Generics                   ( Generic )
+
 import           Data.List                      ( splitAt )
 import           Numeric                        ( readHex )
 
@@ -38,10 +39,18 @@ parseHexString = fmap concat . traverse parseHexToBinary
 type Version = Int
 data Packet = Operator Version Op [Packet]
             | Literal Version Int
-  deriving (Show)
+  deriving (Show, Generic, NFData)
 
-newtype Op = Op { toOp :: Int}
-  deriving (Show)
+data Op = Sum
+        | Product
+        | Minimum
+        | Maximum
+        | GreaterThan
+        | LessThan
+        | Equals
+  deriving (Show, Generic, NFData)
+
+makeBaseFunctor ''Packet
 
 parsePacket :: [Bool] -> Either String Packet
 parsePacket bits = do
@@ -70,9 +79,18 @@ parsePacket' bits = do
   parseVersion x                  = Left $ "Invalid version: " <> show x
 
   parseType :: [Bool] -> KLParser (Maybe Op)
-  parseType (a : b : c : rest) = pure $ case binToInt [a, b, c] of
-    4 -> (Nothing, rest)
-    x -> (Just $ Op x, rest)
+  parseType (a : b : c : rest) =
+    let op = case binToInt [a, b, c] of
+          0 -> Right $ Just Sum
+          1 -> Right $ Just Product
+          2 -> Right $ Just Minimum
+          3 -> Right $ Just Maximum
+          4 -> Right $ Nothing
+          5 -> Right $ Just GreaterThan
+          6 -> Right $ Just LessThan
+          7 -> Right $ Just Equals
+          x -> Left $ "Invalid operation: " <> show x
+    in  fmap (, rest) op
   parseType x = Left $ "Invalid packet type: " <> show x
 
 parseOperator :: [Bool] -> Parser [Packet]
@@ -135,19 +153,33 @@ parseLiteral bits = do
     <$> parseLiteralChunks rest
   parseLiteralChunks x = Left $ "Invalid literal chunk: " <> show x
 
-
--- This could definitely be a hylomorphism, but just go manual for now.
-getVersionSum :: Packet -> Int
-getVersionSum p = case p of
-  Literal v i      -> v
-  Operator v i sub -> v + sum (getVersionSum <$> sub)
+evalVersionSum :: PacketF Int -> Int
+evalVersionSum = \case
+  LiteralF v _      -> v
+  OperatorF v _ sub -> v + sum sub
 
 day16a :: Solution [[Bool]] Int
 day16a = Solution
   { sParse = traverse parseHexString . lines
   , sShow  = show
-  , sSolve = fmap (sum . fmap getVersionSum) . traverse parsePacket
+  , sSolve = fmap (sum . fmap (cata evalVersionSum)) . traverse parsePacket
   }
 
-day16b :: Solution _ _
-day16b = Solution { sParse = Right, sShow = show, sSolve = Right }
+evalPacketF :: PacketF Int -> Int
+evalPacketF = \case
+  OperatorF _ op v -> case op of
+    Sum         -> sum v
+    Product     -> product v
+    Minimum     -> minimum v
+    Maximum     -> maximum v
+    GreaterThan -> if v !! 0 > v !! 1 then 1 else 0
+    LessThan    -> if v !! 0 < v !! 1 then 1 else 0
+    Equals      -> if v !! 0 == v !! 1 then 1 else 0
+  LiteralF _ v -> v
+
+day16b :: Solution [[Bool]] Int
+day16b = Solution
+  { sParse = traverse parseHexString . lines
+  , sShow  = show
+  , sSolve = fmap (head . fmap (cata evalPacketF)) . traverse parsePacket
+  }
