@@ -8,15 +8,12 @@ module AoC.Challenge.Day15
 import           AoC.Solution
 import           AoC.Util                       ( Point
                                                 , cardinalNeighbours
+                                                , maybeToEither
                                                 , parseMap
                                                 )
 import           Data.Foldable                  ( foldl' )
-import           Data.List                      ( sortOn )
 import           Data.Map                       ( Map )
 import qualified Data.Map                      as M
-import           Data.Maybe                     ( fromJust
-                                                , maybeToList
-                                                )
 import           Data.OrdPSQ                    ( OrdPSQ )
 import qualified Data.OrdPSQ                   as PSQ
 import           Linear.V2                      ( V2(..) )
@@ -31,54 +28,47 @@ insertIfBetter k p x q = case PSQ.lookup k q of
                | otherwise -> q
 
 dijkstra
-  :: forall a
-   . (Ord a, Num a)
-  => Map Point a -- ^ Costs
-  -> Point       -- ^ Start
-  -> Point       -- ^ Destination
-  -> a           -- ^ Total cost
-dijkstra costs start dest = go M.empty (PSQ.singleton start 0 0)
+  :: forall a n
+   . (Ord a, Num a, Ord n)
+  => Map n a     -- ^ Costs
+  -> (n -> [n])  -- ^ Neighbours
+  -> n           -- ^ Start
+  -> n           -- ^ Destination
+  -> Maybe a     -- ^ Total cost if successful
+dijkstra costs getNeighbs start dest = go M.empty (PSQ.singleton start 0 0)
  where
-  go :: Map Point a -> OrdPSQ Point a a -> a
+  go :: Map n a -> OrdPSQ n a a -> Maybe a
   go visited unvisited = case M.lookup dest visited of
-    Just x  -> x
-    Nothing -> uncurry go $ step (visited, unvisited)
+    Just x  -> Just x
+    Nothing -> uncurry go =<< step (visited, unvisited)
 
-  step :: (Map Point a, OrdPSQ Point a a) -> (Map Point a, OrdPSQ Point a a)
-  step (v, uv) =
-    let (currP, _, currV, uv') = fromJust $ PSQ.minView uv
-        v'                     = M.insert currP currV v
-    in 
-      -- Short circuit if the dest is the lowest unvisited.
-        if currP == dest
-          then (v', uv')
-          else
-            ( v'
-            , foldl' (\psq (n, v) -> PSQ.insert n v v psq)
-                     uv'
-                     (calcNeighbs (currP, currV))
-            )
+  step :: (Map n a, OrdPSQ n a a) -> Maybe (Map n a, OrdPSQ n a a)
+  step (v, uv) = do
+    (currP, _, currV, uv') <- PSQ.minView uv
+    let v' = M.insert currP currV v
+    if currP == dest
+    -- Short circuit if the destination has the lowest cost.
+      then pure (v', uv')
+      else pure (v', foldl' (handleNeighbour currV) uv' (getNeighbs currP))
    where
-    calcNeighbs :: (Point, a) -> [(Point, a)]
-    calcNeighbs (p, c) =
-      [ (p', c + d)
-      | p' <- cardinalNeighbours p
--- Only check neigbours that are not visited
-      , M.notMember p' v
--- Only check neighbours that exist!
-      , d <- maybeToList (M.lookup p' costs)
--- Only consider neighbours where the new path is lower cost.
-      , maybe True (\(_, v) -> c + d < v) (PSQ.lookup p' uv)
-      ]
+    handleNeighbour :: a -> OrdPSQ n a a -> n -> OrdPSQ n a a
+    handleNeighbour currCost q n
+      | M.member n v = q
+      | otherwise = case M.lookup n costs of
+        Just c  -> insertIfBetter n (c + currCost) (c + currCost) q
+        Nothing -> q
 
-walkPath :: Map Point Int -> Int
-walkPath m = dijkstra m zero (maximum (M.keys m))
+walkPath :: Map Point Int -> Maybe Int
+walkPath m = dijkstra m cardinalNeighbours zero (maximum (M.keys m))
 
 day15a :: Solution (Map Point Int) Int
-day15a =
-  Solution { sParse = parseMap, sShow = show, sSolve = Right . walkPath }
+day15a = Solution
+  { sParse = parseMap
+  , sShow  = show
+  , sSolve = maybeToEither "Unsuccessful path finding" . walkPath
+  }
 
-walkTiled :: Map Point Int -> Int
+walkTiled :: Map Point Int -> Maybe Int
 walkTiled m =
   let
     -- Add one to get the side lengths as the points are zero-indexed.
@@ -98,11 +88,12 @@ walkTiled m =
       | i <- [0 .. 4]
       , j <- [0 .. 4]
       ]
-
-    target = maximum (M.keys tiledMap)
   in
-    dijkstra tiledMap zero target
+    walkPath tiledMap
 
 day15b :: Solution (Map Point Int) Int
-day15b =
-  Solution { sParse = parseMap, sShow = show, sSolve = Right . walkTiled }
+day15b = Solution
+  { sParse = parseMap
+  , sShow  = show
+  , sSolve = maybeToEither "Unsuccessful path finding" . walkTiled
+  }
