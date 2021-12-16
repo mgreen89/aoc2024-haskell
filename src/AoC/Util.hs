@@ -1,3 +1,5 @@
+{-# LANGUAGE ScopedTypeVariables #-}
+
 module AoC.Util
   ( Point
   , cardinalNeighbours
@@ -9,6 +11,8 @@ module AoC.Util
   , eitherToMaybe
   , maybeToEither
   , listTo2Tuple
+  , aStar
+  , dijkstra
   , withColor
   ) where
 
@@ -23,6 +27,9 @@ import           Data.Foldable                  ( toList )
 import           Data.Map                       ( Map )
 import qualified Data.Map                      as M
 import qualified Data.Text                     as T
+
+import           Data.OrdPSQ                    ( OrdPSQ )
+import qualified Data.OrdPSQ                   as PSQ
 import           Linear.V2                      ( V2(..) )
 import           Linear.Vector                  ( basisFor )
 import qualified System.Console.ANSI           as ANSI
@@ -95,6 +102,58 @@ maybeToEither e = maybe (throwError e) pure
 listTo2Tuple :: [a] -> Either String (a, a)
 listTo2Tuple [a, b] = Right (a, b)
 listTo2Tuple _      = Left "Not a 2-elem list"
+
+
+insertIfBetter :: (Ord k, Ord p) => k -> p -> v -> OrdPSQ k p v -> OrdPSQ k p v
+insertIfBetter k p x q = case PSQ.lookup k q of
+  Nothing -> PSQ.insert k p x q
+  Just (p', _) | p < p'    -> PSQ.insert k p x q
+               | otherwise -> q
+
+--------------------------------------
+-- Path Finding
+--------------------------------------
+
+aStar
+  :: forall a n
+   . (Ord a, Num a, Ord n)
+  => (n -> a)        -- ^ Heuristic
+  -> (n -> Map n a)  -- ^ Neighbours and costs
+  -> n               -- ^ Start
+  -> n               -- ^ Destination
+  -> Maybe a         -- ^ Total cost if successful
+aStar heuristic getNs start dest = go M.empty (PSQ.singleton start 0 0)
+ where
+  go :: Map n a -> OrdPSQ n a a -> Maybe a
+  go visited unvisited = case M.lookup dest visited of
+    Just x  -> Just x
+    Nothing -> uncurry go =<< step (visited, unvisited)
+
+  step :: (Map n a, OrdPSQ n a a) -> Maybe (Map n a, OrdPSQ n a a)
+  step (v, uv) = do
+    (currP, _, currV, uv') <- PSQ.minView uv
+    let v' = M.insert currP currV v
+    if currP == dest
+    -- Short circuit if the destination has the lowest cost.
+      then pure (v', uv')
+      else pure (v', M.foldlWithKey' (handleNeighbour currV) uv' (getNs currP))
+   where
+    handleNeighbour :: a -> OrdPSQ n a a -> n -> a -> OrdPSQ n a a
+    handleNeighbour currCost q n nCost
+      | M.member n v = q
+      | otherwise = insertIfBetter n
+                                   (currCost + nCost + heuristic n)
+                                   (currCost + nCost)
+                                   q
+
+dijkstra
+  :: forall a n
+   . (Ord a, Num a, Ord n)
+  => (n -> Map n a)  -- ^ Neighbours and costs
+  -> n               -- ^ Start
+  -> n               -- ^ Destination
+  -> Maybe a         -- ^ Total cost if successful
+dijkstra = aStar (const 0)
 
 --------------------------------------
 -- Output

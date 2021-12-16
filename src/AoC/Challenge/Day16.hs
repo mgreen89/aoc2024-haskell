@@ -4,6 +4,7 @@ module AoC.Challenge.Day16
   ) where
 
 import           AoC.Solution
+import           AoC.Util                       ( stripNewlines )
 import           Control.DeepSeq                ( NFData )
 import           Data.Bifunctor                 ( first )
 import           Data.Foldable                  ( foldl' )
@@ -31,7 +32,7 @@ parseHexString = fmap concat . traverse parseHexCharToBin
   parseHexCharToBin :: Char -> Either String [Bool]
   parseHexCharToBin x = case readHex (pure x) of
     [(i, "")] -> intToBinFixed 4 i
-    _         -> Left "Unable to parse"
+    _ -> Left $ pure x <> " not a hex char"
 
 type Version = Int
 data Packet = Operator Version Op [Packet]
@@ -60,7 +61,7 @@ type KLParser a = Either String (a, [Bool])
 
 parsePacket' :: [Bool] -> Parser Packet
 parsePacket' bits = do
-  (v, r) <- parseVersion bits
+  (v, r ) <- parseVersion bits
   (t, r') <- parseType r
   case t of
     Just op -> do
@@ -93,11 +94,11 @@ parsePacket' bits = do
 parseOperator :: [Bool] -> Parser [Packet]
 parseOperator (lengthType : rest) = if lengthType
   then do
-    (numSubPackets, r) <- parseInt 11 rest
+    (numSubPackets, r)  <- parseInt 11 rest
     (subPackets, l, r') <- parseNPackets numSubPackets r
     pure (subPackets, l + 12, r')
   else do
-    (numSubBits, r)    <- parseInt 15 rest
+    (numSubBits, r)     <- parseInt 15 rest
     (subPackets, l, r') <- parsePacketLength numSubBits r
     pure (subPackets, l + 16, r')
 
@@ -156,11 +157,10 @@ evalVersionSum = \case
   OperatorF v _ sub -> v + sum sub
 
 day16a :: Solution [Bool] Int
-day16a = Solution
-  { sParse = parseHexString
-  , sShow  = show
-  , sSolve = fmap (cata evalVersionSum) . parsePacket
-  }
+day16a = Solution { sParse = parseHexString . stripNewlines
+                  , sShow  = show
+                  , sSolve = fmap (cata evalVersionSum) . parsePacket
+                  }
 
 evalExpression :: PacketF Int -> Int
 evalExpression = \case
@@ -175,8 +175,7 @@ evalExpression = \case
   LiteralF _ v -> v
 
 day16b :: Solution [Bool] Int
-day16b = Solution
-  { sParse = parseHexString
-  , sShow  = show
-  , sSolve = fmap (cata evalExpression) . parsePacket
-  }
+day16b = Solution { sParse = parseHexString . stripNewlines
+                  , sShow  = show
+                  , sSolve = fmap (cata evalExpression) . parsePacket
+                  }

@@ -72,7 +72,7 @@ runPoly steps (tmpl, ins) =
           , M.singleton (last tmpl) 1
           ]
   in
-    (maximum counts - minimum counts) `div` 2
+    maximum counts - minimum counts
 
 day14a :: Solution (String, [(String, Char)]) Int
 day14a = Solution { sParse = parse, sShow = show, sSolve = Right . runPoly 10 }

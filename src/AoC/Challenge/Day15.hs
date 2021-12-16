@@ -1,5 +1,3 @@
-{-# LANGUAGE ScopedTypeVariables #-}
-
 module AoC.Challenge.Day15
   ( day15a
   , day15b
@@ -8,58 +6,28 @@ module AoC.Challenge.Day15
 import           AoC.Solution
 import           AoC.Util                       ( Point
                                                 , cardinalNeighbours
+                                                , dijkstra
                                                 , maybeToEither
                                                 , parseMap
                                                 )
 import           Data.Foldable                  ( foldl' )
 import           Data.Map                       ( Map )
 import qualified Data.Map                      as M
-import           Data.OrdPSQ                    ( OrdPSQ )
-import qualified Data.OrdPSQ                   as PSQ
+import qualified Data.Set                      as S
 import           Linear.V2                      ( V2(..) )
 import           Linear.Vector                  ( (*^)
                                                 , zero
                                                 )
 
-insertIfBetter :: (Ord k, Ord p) => k -> p -> v -> OrdPSQ k p v -> OrdPSQ k p v
-insertIfBetter k p x q = case PSQ.lookup k q of
-  Nothing -> PSQ.insert k p x q
-  Just (p', _) | p < p'    -> PSQ.insert k p x q
-               | otherwise -> q
-
-dijkstra
-  :: forall a n
-   . (Ord a, Num a, Ord n)
-  => Map n a     -- ^ Costs
-  -> (n -> [n])  -- ^ Neighbours
-  -> n           -- ^ Start
-  -> n           -- ^ Destination
-  -> Maybe a     -- ^ Total cost if successful
-dijkstra costs getNeighbs start dest = go M.empty (PSQ.singleton start 0 0)
- where
-  go :: Map n a -> OrdPSQ n a a -> Maybe a
-  go visited unvisited = case M.lookup dest visited of
-    Just x  -> Just x
-    Nothing -> uncurry go =<< step (visited, unvisited)
-
-  step :: (Map n a, OrdPSQ n a a) -> Maybe (Map n a, OrdPSQ n a a)
-  step (v, uv) = do
-    (currP, _, currV, uv') <- PSQ.minView uv
-    let v' = M.insert currP currV v
-    if currP == dest
-    -- Short circuit if the destination has the lowest cost.
-      then pure (v', uv')
-      else pure (v', foldl' (handleNeighbour currV) uv' (getNeighbs currP))
-   where
-    handleNeighbour :: a -> OrdPSQ n a a -> n -> OrdPSQ n a a
-    handleNeighbour currCost q n
-      | M.member n v = q
-      | otherwise = case M.lookup n costs of
-        Just c  -> insertIfBetter n (c + currCost) (c + currCost) q
-        Nothing -> q
-
 walkPath :: Map Point Int -> Maybe Int
-walkPath m = dijkstra m cardinalNeighbours zero (maximum (M.keys m))
+walkPath m = dijkstra getNeighbours zero (maximum (M.keys m))
+ where
+  getNeighbours :: Point -> Map Point Int
+  getNeighbours =
+    M.fromSet (m M.!)
+      . S.intersection (M.keysSet m)
+      . S.fromList
+      . cardinalNeighbours
 
 day15a :: Solution (Map Point Int) Int
 day15a = Solution
