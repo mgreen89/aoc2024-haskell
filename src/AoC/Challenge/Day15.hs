@@ -24,6 +24,12 @@ import           Linear.Vector                  ( (*^)
                                                 , zero
                                                 )
 
+insertIfBetter :: (Ord k, Ord p) => k -> p -> v -> OrdPSQ k p v -> OrdPSQ k p v
+insertIfBetter k p x q = case PSQ.lookup k q of
+  Nothing -> PSQ.insert k p x q
+  Just (p', _) | p < p'    -> PSQ.insert k p x q
+               | otherwise -> q
+
 dijkstra
   :: forall a
    . (Ord a, Num a)
@@ -40,9 +46,8 @@ dijkstra costs start dest = go M.empty (PSQ.singleton start 0 0)
 
   step :: (Map Point a, OrdPSQ Point a a) -> (Map Point a, OrdPSQ Point a a)
   step (v, uv) =
-    let (currP, _, currV) = fromJust $ PSQ.findMin uv
-        v'                = M.insert currP currV v
-        uv'               = PSQ.deleteMin uv
+    let (currP, _, currV, uv') = fromJust $ PSQ.minView uv
+        v'                     = M.insert currP currV v
     in 
       -- Short circuit if the dest is the lowest unvisited.
         if currP == dest
