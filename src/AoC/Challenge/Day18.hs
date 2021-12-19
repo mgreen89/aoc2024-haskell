@@ -1,11 +1,6 @@
-{-# OPTIONS_GHC -Wno-unused-imports   #-}
-{-# OPTIONS_GHC -Wno-unused-top-binds #-}
-{-# LANGUAGE PartialTypeSignatures #-}
-{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
-
 module AoC.Challenge.Day18
   ( day18a
-  -- , day18b
+  , day18b
   ) where
 
 import           AoC.Solution
@@ -15,7 +10,6 @@ import           Data.Bifunctor                 ( first )
 import           Data.List                      ( foldl1' )
 import           GHC.Generics                   ( Generic )
 import           Numeric                        ( readDec )
-import           Text.Printf                    ( printf )
 
 {- Create a binary tree of snail numbers, and user zippers to walk
    around the tree.
@@ -23,7 +17,7 @@ import           Text.Printf                    ( printf )
 
 data SnailNum = Pair SnailNum SnailNum
               | Num Int
-  deriving (Show, Generic, NFData)
+  deriving (Show, Eq, Generic, NFData)
 
 parseSnailNum :: String -> SnailNum
 parseSnailNum = fst . go
@@ -38,10 +32,6 @@ parseSnailNum = fst . go
           -- Drop the ']' in the rest.
       in  (Pair left right, tail rest')
     else first Num . head . readDec $ s
-
-showSnailNum :: SnailNum -> String
-showSnailNum (Num x   ) = printf "%d" x
-showSnailNum (Pair l r) = printf "[%s,%s]" (showSnailNum l) (showSnailNum r)
 
 data Crumb = LeftCrumb SnailNum
            | RightCrumb SnailNum
@@ -148,11 +138,18 @@ magnitude :: SnailNum -> Int
 magnitude (Pair l r) = 3 * magnitude l + 2 * magnitude r
 magnitude (Num x   ) = x
 
-day18a :: Solution _ _
+day18a :: Solution [SnailNum] Int
 day18a = Solution { sParse = Right . fmap parseSnailNum . lines
                   , sShow  = show
                   , sSolve = Right . magnitude . sumSnail
                   }
 
-day18b :: Solution _ _
-day18b = Solution { sParse = Right, sShow = show, sSolve = Right }
+day18b :: Solution [SnailNum] Int
+day18b = Solution
+  { sParse = Right . fmap parseSnailNum . lines
+  , sShow  = show
+  , sSolve = Right
+             . maximum
+             . fmap (magnitude . sumSnail)
+             . (\l -> [ [x, y] | x <- l, y <- l, x /= y ])
+  }
