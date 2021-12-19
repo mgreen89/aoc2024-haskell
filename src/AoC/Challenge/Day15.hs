@@ -10,7 +10,6 @@ import           AoC.Util                       ( Point
                                                 , maybeToEither
                                                 , parseMap
                                                 )
-import           Data.Foldable                  ( foldl' )
 import           Data.Map                       ( Map )
 import qualified Data.Map                      as M
 import qualified Data.Set                      as S
