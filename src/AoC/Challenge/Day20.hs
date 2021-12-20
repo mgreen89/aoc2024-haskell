@@ -1,11 +1,6 @@
-{-# OPTIONS_GHC -Wno-unused-imports   #-}
-{-# OPTIONS_GHC -Wno-unused-top-binds #-}
-{-# LANGUAGE PartialTypeSignatures #-}
-{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
-
 module AoC.Challenge.Day20
   ( day20a
-  -- , day20b
+  , day20b
   ) where
 
 import           AoC.Solution
@@ -19,15 +14,7 @@ import           Data.Foldable                  ( foldl' )
 import           Data.List.Split                ( splitOn )
 import           Data.Map                       ( Map )
 import qualified Data.Map                      as M
-import           Data.Maybe                     ( catMaybes
-                                                , mapMaybe
-                                                )
-import           Data.Set                       ( Set )
-import qualified Data.Set                      as S
-import qualified Data.Trie.Convenience         as M
 import           Linear.V2                      ( V2(..) )
-
-import Debug.Trace
 
 parseIEA :: String -> Array Int Bool
 parseIEA s = A.array (0, length s - 1) (zip [0 ..] . fmap (== '#') $ s)
@@ -66,12 +53,20 @@ enhance iea i iter =
         . fmap (enhancePixel iea i iter . uncurry V2)
         $ [ (x, y) | y <- [yMin .. yMax], x <- [xMin .. xMax] ]
 
+countLitEnhanced :: Int -> Array Int Bool -> Map Point Bool -> Int
+countLitEnhanced n iea i0 =
+  M.size . M.filter id . foldl' (enhance iea) i0 $ [0..(n-1)]
+
 day20a :: Solution (Array Int Bool, Map Point Bool) Int
 day20a = Solution
   { sParse = parse
   , sShow  = show
-  , sSolve = Right . (\(iea, i) -> M.size . M.filter id . foldl' (enhance iea) i $ [0..1])
+  , sSolve = Right . uncurry (countLitEnhanced 2)
   }
 
-day20b :: Solution _ _
-day20b = Solution { sParse = Right, sShow = show, sSolve = Right }
+day20b :: Solution (Array Int Bool, Map Point Bool) Int
+day20b = Solution
+  { sParse = parse
+  , sShow  = show
+  , sSolve = Right . uncurry (countLitEnhanced 50)
+  }
