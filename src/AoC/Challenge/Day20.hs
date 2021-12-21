@@ -37,7 +37,8 @@ enhancePixel
 enhancePixel iea i iter p =
   let neighbdeltas = [ V2 x y | y <- [-1 .. 1], x <- [-1 .. 1] ]
       neighbs      = fmap (+ p) neighbdeltas
-      idxBits      = fmap (\n -> M.findWithDefault (odd iter) n i) neighbs
+      defaultPx    = (iea A.! 0) && if iea A.! 511 then error "lol" else odd iter
+      idxBits      = fmap (\n -> M.findWithDefault defaultPx n i) neighbs
       idx          = boolsToInt idxBits
   in  (p, iea A.! idx)
 
@@ -45,28 +46,26 @@ enhancePixel iea i iter p =
 enhance :: Array Int Bool -> Map Point Bool -> Int -> Map Point Bool
 enhance iea i iter =
   let (xs, ys) = unzip . fmap (\(V2 x y, _) -> (x, y)) . M.toList $ i
-      xMin     = minimum xs - 2
-      xMax     = maximum xs + 2
-      yMin     = minimum ys - 2
-      yMax     = maximum ys + 2
+      xMin     = minimum xs - 1
+      xMax     = maximum xs + 1
+      yMin     = minimum ys - 1
+      yMax     = maximum ys + 1
   in  M.fromList
         . fmap (enhancePixel iea i iter . uncurry V2)
         $ [ (x, y) | y <- [yMin .. yMax], x <- [xMin .. xMax] ]
 
 countLitEnhanced :: Int -> Array Int Bool -> Map Point Bool -> Int
 countLitEnhanced n iea i0 =
-  M.size . M.filter id . foldl' (enhance iea) i0 $ [0..(n-1)]
+  M.size . M.filter id . foldl' (enhance iea) i0 $ [0 .. (n - 1)]
 
 day20a :: Solution (Array Int Bool, Map Point Bool) Int
-day20a = Solution
-  { sParse = parse
-  , sShow  = show
-  , sSolve = Right . uncurry (countLitEnhanced 2)
-  }
+day20a = Solution { sParse = parse
+                  , sShow  = show
+                  , sSolve = Right . uncurry (countLitEnhanced 2)
+                  }
 
 day20b :: Solution (Array Int Bool, Map Point Bool) Int
-day20b = Solution
-  { sParse = parse
-  , sShow  = show
-  , sSolve = Right . uncurry (countLitEnhanced 50)
-  }
+day20b = Solution { sParse = parse
+                  , sShow  = show
+                  , sSolve = Right . uncurry (countLitEnhanced 50)
+                  }
