@@ -1,10 +1,10 @@
 name:                aoc2021
-version:             0.1.0.0
+version:             0.2.0.0
 github:              "mgreen89/aoc2021-haskell"
 license:             BSD3
 author:              "Matthew Green"
 maintainer:          "mgreen89@gmail.com"
-copyright:           "2021 Matthew Green"
+copyright:           "2022 Matthew Green"
 
 extra-source-files:
 - README.md
@@ -64,10 +64,12 @@ default-extensions:
   - DeriveFoldable
   - DeriveGeneric
   - DeriveTraversable
+  - DuplicateRecordFields
   - FlexibleContexts
   - GADTs
   - KindSignatures
   - LambdaCase
+  - OverloadedRecordDot
   - PatternGuards
   - RecordWildCards
   - TemplateHaskell

@@ -29,36 +29,36 @@ import           Text.Printf
 -- | Specification for which solutions to run (and optionally test/bench etc...)
 data RunSpec
   = RSAll
-  | RSDayAll {_rsDay :: Day}
-  | RSDayPart {_rsSpec :: ChallengeSpec}
+  | RSDayAll {day :: Day}
+  | RSDayPart {spec :: ChallengeSpec}
   deriving Show
 
 -- | Options for "run" mode.
 data RunOpts = RunOpts
-  { _roSpec   :: !RunSpec
-  , _roActual :: !Bool
-  , _roTest   :: !Bool
-  , _roBench  :: !Bool
+  { spec   :: !RunSpec
+  , actual :: !Bool
+  , test   :: !Bool
+  , bench  :: !Bool
   }
   deriving Show
 
 -- | Default "run" mode options.
 defaultRunOpts :: RunSpec -> RunOpts
 defaultRunOpts rs =
-  RunOpts { _roSpec = rs, _roActual = True, _roTest = False, _roBench = False }
+  RunOpts { spec = rs, actual = True, test = False, bench = False }
 
 -- | Options for "submit" mode.
 data SubmitOpts = SubmitOpts
-  { _soSpec  :: !ChallengeSpec
-  , _soTest  :: !Bool
-  , _soForce :: !Bool
+  { spec  :: !ChallengeSpec
+  , test  :: !Bool
+  , _force :: !Bool
   }
   deriving Show
 
 -- | Default "submit" mode options.
 defaultSubmitOpts :: ChallengeSpec -> SubmitOpts
 defaultSubmitOpts cs =
-  SubmitOpts { _soSpec = cs, _soTest = True, _soForce = False }
+  SubmitOpts { spec = cs, test = True, _force = False }
 
 -- | Main function for the "run" mode.
 mainRun
@@ -66,8 +66,8 @@ mainRun
   => Config
   -> RunOpts
   -> m (Map Day (Map Part (Either [String] String)))
-mainRun cfg ro@RunOpts {..} = do
-  solsToRun <- liftEither . first (: []) . filterChallengeMap $ _roSpec
+mainRun cfg ro = do
+  solsToRun <- liftEither . first (: []) . filterChallengeMap $ ro.spec
   liftIO $ flip M.traverseWithKey solsToRun $ \d ->
     M.traverseWithKey $ \p -> runOne cfg ro d p
 
@@ -77,17 +77,16 @@ mainSubmit
   => Config
   -> SubmitOpts
   -> m (Text, SubmitRes)
-mainSubmit cfg@Config {..} SubmitOpts {..} = do
-  sessKey <- maybeToEither ["ERROR: Session Key required to submit"] _cfgSession
-  let ChallengeSpec {..} = _soSpec
-  cd@ChallengeData {..} <- liftIO $ challengeData cfg _soSpec
-  dps <- liftEither . first (: []) . getDay challengeMap $ _csDay
-  sol                   <- liftEither . first (: []) . getPart dps $ _csPart
-  inp                   <- liftEither $ first ("ERROR: No input" :) _cdInput
+mainSubmit cfg so = do
+  sessKey <- maybeToEither ["ERROR: Session Key required to submit"] cfg.session
+  cd <- liftIO $ challengeData cfg so.spec
+  dps <- liftEither . first (: []) . getDay challengeMap $ so.spec.day
+  sol                   <- liftEither . first (: []) . getPart dps $ so.spec.part
+  inp                   <- liftEither $ first ("ERROR: No input" :) cd.input
 
-  when _soTest $ do
+  when so.test $ do
     testRes <- liftIO $ runTestSuite sol cd
-    unless (and testRes) $ if _soForce
+    unless (and testRes) $ if so._force
       then do
         liftIO $ withColor ANSI.Vivid ANSI.Red $ putStrLn
           "Forcing submission with test errors!"
@@ -98,8 +97,8 @@ mainSubmit cfg@Config {..} SubmitOpts {..} = do
     $ runSomeSolution sol inp
   liftIO $ printf "Submitting solution %s\n" res
 
-  let opts   = defaultAoCOpts _cfgYear sessKey
-      submit = runAoC opts (AoCSubmit _csDay _csPart res)
+  let opts   = defaultAoCOpts cfg.year sessKey
+      submit = runAoC opts (AoCSubmit so.spec.day so.spec.part res)
   output@(_, status) <- liftEither . first showAoCError =<< liftIO submit
 
   let (color, out) = displayStatus status
@@ -123,18 +122,18 @@ runOne
   -> Part
   -> SomeSolution
   -> IO (Either [String] String)
-runOne cfg RunOpts {..} d p sol = do
+runOne cfg ro d p sol = do
   withColor ANSI.Dull ANSI.Blue $ printf ">> Day %02d%c" (dayInt d) (partChar p)
   cd@ChallengeData {..} <- challengeData cfg (ChallengeSpec d p)
-  if _roTest
+  if ro.test
     then do
       printf "\n"
       runTestSuite sol cd
       printf "Answer :"
     else printf " "
-  case _cdInput of
+  case cd.input of
     Right inp
-      | _roBench -> do
+      | ro.bench -> do
         _ <- evaluate (force inp)
         case sol of
           SomeSolution Solution {..} -> do
@@ -148,17 +147,17 @@ runOne cfg RunOpts {..} d p sol = do
               _ -> do
                 putStrLn "(No parse)"
                 pure $ Left ["No results when benchmarking"]
-      | _roActual -> first ((: []) . show) <$> runSol sol inp
+      | ro.actual -> first ((: []) . show) <$> runSol sol inp
       | otherwise -> pure $ Left ["Skipping!"]
     Left e
-      | _roTest
+      | ro.test
       -> pure (Left ["Ran tests and no main input"])
       | otherwise
       -> Left e <$ putStrLn "[INPUT ERROR]" <* traverse_ putStrLn e
 
 runTestSuite :: SomeSolution -> ChallengeData -> IO (Maybe Bool)
-runTestSuite sol ChallengeData {..} = do
-  res <- traverse (runTestCase sol) _cdTests
+runTestSuite sol cd = do
+  res <- traverse (runTestCase sol) cd.tests
   unless (null res) $ do
     let (mark, color) = if and res then ('✓', ANSI.Green) else ('✗', ANSI.Red)
     withColor ANSI.Vivid color
@@ -173,17 +172,17 @@ solResString res = case res of
   Left  e -> printf "[ERROR] %s" (showSolutionError e)
 
 runTestCase :: SomeSolution -> TestData -> IO Bool
-runTestCase sol TestData {..} = do
+runTestCase sol td = do
   withColor ANSI.Dull color $ printf "[%c]" mark
   printf " (%s)" (solResString res)
   if pass
     then printf "\n"
-    else withColor ANSI.Vivid ANSI.Red $ printf " (Expected: %s)\n" _tdAnswer
+    else withColor ANSI.Vivid ANSI.Red $ printf " (Expected: %s)\n" td.answer
   return pass
  where
-  res                 = runSomeSolution sol _tdInput
+  res                 = runSomeSolution sol td.input
   (mark, pass, color) = case res of
-    Right r -> if strip _tdAnswer == strip r
+    Right r -> if strip td.answer == strip r
       then ('✓', True, ANSI.Green)
       else ('✗', False, ANSI.Red)
     Left _ -> ('✗', False, ANSI.Red)

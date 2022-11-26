@@ -138,31 +138,31 @@ getPart ps p =
 
 -- | Specification for a single challenge.
 data ChallengeSpec = ChallengeSpec
-  { _csDay  :: Day
-  , _csPart :: Part
+  { day  :: Day
+  , part :: Part
   }
   deriving Show
 
 -- | All the file paths associated with a single challenge.
 data ChallengePaths = ChallengePaths
-  { _cpInput :: !FilePath
-  , _cpTests :: !FilePath
+  { input :: !FilePath
+  , tests :: !FilePath
   }
   deriving Show
 
 -- | Get the challenge paths for the given challenge.
 challengePaths :: ChallengeSpec -> ChallengePaths
 challengePaths (ChallengeSpec d p) = ChallengePaths
-  { _cpInput = "data" </> "input" </> printf "day%02d" d' <.> "txt"
-  , _cpTests = "data" </> "test" </> printf "day%02d%c" d' p' <.> "txt"
+  { input = "data" </> "input" </> printf "day%02d" d' <.> "txt"
+  , tests = "data" </> "test" </> printf "day%02d%c" d' p' <.> "txt"
   }
  where
   d' = dayInt d
   p' = partChar p
 
 makeChallengePathDirs :: ChallengePaths -> IO ()
-makeChallengePathDirs ChallengePaths {..} =
-  traverse_ (createDirectoryIfMissing True . takeDirectory) [_cpInput, _cpTests]
+makeChallengePathDirs cp =
+  traverse_ (createDirectoryIfMissing True . takeDirectory) [cp.input, cp.tests]
 
 readFileMaybe :: FilePath -> IO (Maybe String)
 readFileMaybe fp = do
@@ -171,8 +171,8 @@ readFileMaybe fp = do
 
 -- | The associated input and test data for a given challenge.
 data ChallengeData = ChallengeData
-  { _cdInput :: !(Either [String] String)
-  , _cdTests :: ![TestData]
+  { input :: !(Either [String] String)
+  , tests :: ![TestData]
   }
 
 -- | Get the associated data for a given challenge.
@@ -184,33 +184,33 @@ challengeData Config {..} spec@ChallengeSpec {..} = do
   inp <-
     runExceptT
     . asum
-    $ [ maybeToEither [printf "Input file not found at %s" _cpInput]
-        =<< liftIO (readFileMaybe _cpInput)
+    $ [ maybeToEither [printf "Input file not found at %s" input]
+        =<< liftIO (readFileMaybe input)
       , fetchInput
       ]
-  ts <- readFileMaybe _cpTests >>= \case
+  ts <- readFileMaybe tests >>= \case
     Nothing -> pure []
-    Just s  -> case MP.parse parseTests _cpTests s of
+    Just s  -> case MP.parse parseTests tests s of
       -- Put [] in the IO functor (no test data), and print an error.
       Left  e -> [] <$ putStrLn (MP.errorBundlePretty e)
       Right r -> pure r
 
-  return ChallengeData { _cdInput = inp, _cdTests = ts }
+  return ChallengeData { input = inp, tests = ts }
  where
   cps@ChallengePaths {..} = challengePaths spec
   fetchInput :: ExceptT [String] IO String
   fetchInput = do
-    sessKey <- maybeToEither ["Session key needed to fetch input"] _cfgSession
-    let opts = defaultAoCOpts _cfgYear sessKey
+    sessKey <- maybeToEither ["Session key needed to fetch input"] session
+    let opts = defaultAoCOpts year sessKey
     inp <- liftEither . bimap showAoCError T.unpack =<< liftIO (runAoC opts a)
-    liftIO $ writeFile _cpInput inp
+    liftIO $ writeFile input inp
     pure inp
-    where a = AoCInput _csDay
+    where a = AoCInput day
 
 -- | Input and expected answer for a single test.
 data TestData = TestData
-  { _tdInput  :: String
-  , _tdAnswer :: String
+  { input  :: String
+  , answer :: String
   }
 
 parseTests :: MP.Parsec Void String [TestData]
@@ -224,4 +224,4 @@ parseTest = do
     *> MP.space1
     *> MP.many (MP.anySingleBut '\n')
     <* (MP.single '\n' <|> ('\n' <$ MP.lookAhead MP.eof))
-  pure TestData { _tdInput = inp, _tdAnswer = ans }
+  pure TestData { input = inp, answer = ans }

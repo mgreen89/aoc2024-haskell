@@ -21,13 +21,13 @@ data Mode
   | Submit SubmitOpts
 
 data Opts = O
-  { _oMode   :: !Mode
-  , _oConfig :: !(Maybe FilePath)
+  { mode   :: !Mode
+  , config :: !(Maybe FilePath)
   }
 
 main :: IO ()
 main = do
-  O {..} <- execParser $ info
+  o <- execParser $ info
     (parseOpts <**> helper)
     (  fullDesc
     <> header "aoc-dev - Advent of Code interactive dev env"
@@ -36,8 +36,8 @@ main = do
          ++ availableDays
          )
     )
-  cfg <- readConfig $ fromMaybe defConfPath _oConfig
-  out <- runExceptT $ case _oMode of
+  cfg <- readConfig $ fromMaybe defConfPath o.config
+  out <- runExceptT $ case o.mode of
     Run    ro -> void $ mainRun cfg ro
     Submit so -> void $ mainSubmit cfg so
   forOf_ _Left out $ \e -> do
@@ -85,8 +85,8 @@ parseRunSpec = do
 
 parseRun :: Parser RunOpts
 parseRun = do
-  _roSpec   <- parseRunSpec
-  _roActual <-
+  spec   <- parseRunSpec
+  actual <-
     fmap not
     . switch
     . mconcat
@@ -94,15 +94,15 @@ parseRun = do
       , short 's'
       , help "Do not run the actual input, but run tests and/or benchmarks"
       ]
-  _roTest  <- switch . mconcat $ [long "test", short 't', help "Run tests"]
-  _roBench <-
+  test  <- switch . mconcat $ [long "test", short 't', help "Run tests"]
+  bench <-
     switch . mconcat $ [long "bench", short 'b', help "Run benchmarks"]
   pure RunOpts { .. }
 
 parseSubmit :: Parser SubmitOpts
 parseSubmit = do
-  _soSpec <- parseChallengeSpec
-  _soTest <-
+  spec <- parseChallengeSpec
+  test <-
     fmap not
     . switch
     . mconcat
@@ -110,7 +110,7 @@ parseSubmit = do
       , short 's'
       , help "Skip running tests before submission"
       ]
-  _soForce <-
+  _force <-
     switch
     . mconcat
     $ [long "force", short 'f', help "Always submit, even if tests fail"]
@@ -118,7 +118,7 @@ parseSubmit = do
 
 parseOpts :: Parser Opts
 parseOpts = do
-  _oConfig <-
+  config <-
     optional
     . strOption
     . mconcat
@@ -126,7 +126,7 @@ parseOpts = do
       , metavar "PATH"
       , help $ printf "Path to configuration file (default %s)" defConfPath
       ]
-  _oMode <-
+  mode <-
     subparser
     . mconcat
     $ [ command "run" $ info (Run <$> parseRun <**> helper)
@@ -140,5 +140,5 @@ parseOpts = do
       ]
   pure O { .. }
  where
-  parseTest  = fmap (\ro -> ro { _roTest = True }) parseRun
-  parseBench = fmap (\ro -> ro { _roBench = True }) parseRun
+  parseTest  = fmap (\ro -> ro { test = True } :: RunOpts) parseRun
+  parseBench = fmap (\ro -> ro { bench = True }) parseRun

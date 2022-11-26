@@ -11,7 +11,6 @@ I've ignored anything I didn't understand (for now), so this has less functional
 
 ## To-do
 
-- Support GHC 9.2 and `OverloadedRecordDot` to clean up all the record prefixes (blocked on stack supporting 9.2)
 - Understand lenses better
 - Understand TemplateHaskell (and haskell ext) enough to use it to generate the base list of all solutions
 - Add functionality to pass test-specific paramaters to solution functions.

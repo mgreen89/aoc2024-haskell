@@ -16,14 +16,14 @@ import           Text.Printf
 
 -- | Configuration data.
 data Config = Config
-  { _cfgSession :: Maybe String   -- ^ default: 'Nothing'
-  , _cfgYear    :: Integer        -- ^ default: 2020
+  { session :: Maybe String   -- ^ default: 'Nothing'
+  , year    :: Integer        -- ^ default: 2020
   }
   deriving (Generic, Show)
 
 -- | Default configuration.
 instance Default Config where
-  def = Config { _cfgSession = Nothing, _cfgYear = 2020 }
+  def = Config { session = Nothing, year = 2020 }
 
 -- | Default configuration file path.
 defConfPath :: FilePath
