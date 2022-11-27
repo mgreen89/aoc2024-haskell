@@ -1,27 +1,18 @@
+{-# OPTIONS_GHC -Wno-unused-imports   #-}
+{-# OPTIONS_GHC -Wno-unused-top-binds #-}
+{-# LANGUAGE PartialTypeSignatures #-}
+{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
+
 module AoC.Challenge.Day01
-  ( day01a
-  , day01b
+  (
+    -- day01a
+  -- , day01b
   ) where
 
 import           AoC.Solution
 
+day01a :: Solution _ _
+day01a = Solution { sParse = Right, sShow = show, sSolve = Right }
 
-countIncreases :: Int -> [Int] -> Int
-countIncreases gap xs = length $ filter id $ zipWith (<) xs (drop gap xs)
-
-
-day01a :: Solution [Int] Int
-day01a = Solution { sParse = Right . fmap read . lines
-                  , sShow  = show
-                  , sSolve = Right . countIncreases 1
-                  }
-
-{-
-Actually only need to count the increases of 3-apart items.
-i.e. [A, B, C], D, ... and A, [B, C, D], ... only actually differ by D - A.
--}
-day01b :: Solution [Int] Int
-day01b = Solution { sParse = Right . fmap read . lines
-                  , sShow  = show
-                  , sSolve = Right . countIncreases 3
-                  }
+day01b :: Solution _ _
+day01b = Solution { sParse = Right, sShow = show, sSolve = Right }

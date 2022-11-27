@@ -1,73 +1,18 @@
+{-# OPTIONS_GHC -Wno-unused-imports   #-}
+{-# OPTIONS_GHC -Wno-unused-top-binds #-}
+{-# LANGUAGE PartialTypeSignatures #-}
+{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
+
 module AoC.Challenge.Day11
-  ( day11a
-  , day11b
+  (
+    -- day11a
+  -- , day11b
   ) where
 
 import           AoC.Solution
-import           AoC.Util                       ( Point
-                                                , allNeighbours
-                                                , freqs
-                                                , parseMap
-                                                )
-import           Data.Foldable                  ( find )
-import           Data.List                      ( unfoldr )
 
-import           Data.Map                       ( Map )
-import qualified Data.Map                      as M
-import           Data.Maybe                     ( fromJust )
-import           Data.Set                       ( Set )
-import qualified Data.Set                      as S
+day11a :: Solution _ _
+day11a = Solution { sParse = Right, sShow = show, sSolve = Right }
 
-type EnergyMap = Map Point Int
-type FlashSet = Set Point
-
--- Run a single step.
--- Add one to all energy values, and the run all the flashes.
--- Returns the set of all flashed octopuses and the new energy map.
-step :: EnergyMap -> (FlashSet, EnergyMap)
-step e =
-  let (f, e') = flashAll . fmap (+ 1) $ e
-  in  (f, M.union e' (M.fromSet (const 0) f))
-
--- Run all the possible flashes at this state.
--- Returns the set of flashed octopuses, and updated energy map (that
--- doesn't include octpuses that flashed).
-flashAll :: EnergyMap -> (FlashSet, EnergyMap)
-flashAll = go S.empty
- where
-  go :: FlashSet -> EnergyMap -> (FlashSet, EnergyMap)
-  go f e =
-    let (f', e') = flash e
-    in  if S.null f' then (f, e') else go (S.union f f') e'
-
--- Run run flashes that are ready, and update the energy map.
--- The new energy map does not contain values for octpuses that flashed so
--- they don't flash again this cycle.
-flash :: EnergyMap -> (FlashSet, EnergyMap)
-flash m =
-  let (ready, notReady) = M.partition (> 9) m
-      neighbourFlashes  = freqs $ allNeighbours =<< M.keys ready
-  in  ( M.keysSet ready
-      , M.restrictKeys (M.unionWith (+) m neighbourFlashes) (M.keysSet notReady)
-      )
-
-day11a :: Solution (Map Point Int) Int
-day11a = Solution
-  { sParse = parseMap
-  , sShow  = show
-  , sSolve = Right . sum . fmap S.size . take 100 . unfoldr (Just . step)
-  }
-
-day11b :: Solution (Map Point Int) Int
-day11b = Solution
-  { sParse = parseMap
-  , sShow  = show
-  , sSolve = \m ->
-               Right
-                 . fst
-                 . fromJust
-                 . find ((M.keysSet m ==) . snd)
-                 . zip [1 ..]
-                 . unfoldr (Just . step)
-                 $ m
-  }
+day11b :: Solution _ _
+day11b = Solution { sParse = Right, sShow = show, sSolve = Right }
