@@ -14,8 +14,7 @@ module AoC.Challenge (
   ChallengeData (..),
   challengeData,
   TestData (..),
-)
-where
+) where
 
 import Advent.Extra
 import AoC.Challenge.Day01 as AoC
@@ -76,56 +75,57 @@ challengeMap =
 
 -- | List of all the completed solutions.
 solutionList :: [(Day, (Part, SomeSolution))]
-solutionList =
-  []
-
--- (mkDay_ 1 , (Part1, SomeSolution day01a))
--- , (mkDay_ 1 , (Part2, SomeSolution day01b))
--- , (mkDay_ 2 , (Part1, SomeSolution day02a))
--- , (mkDay_ 2 , (Part2, SomeSolution day02b))
--- , (mkDay_ 3 , (Part1, SomeSolution day03a))
--- , (mkDay_ 3 , (Part2, SomeSolution day03b))
--- , (mkDay_ 4 , (Part1, SomeSolution day04a))
--- , (mkDay_ 4 , (Part2, SomeSolution day04b))
--- , (mkDay_ 5 , (Part1, SomeSolution day05a))
--- , (mkDay_ 5 , (Part2, SomeSolution day05b))
--- , (mkDay_ 6 , (Part1, SomeSolution day06a))
--- , (mkDay_ 6 , (Part2, SomeSolution day06b))
--- , (mkDay_ 7 , (Part1, SomeSolution day07a))
--- , (mkDay_ 7 , (Part2, SomeSolution day07b))
--- , (mkDay_ 8 , (Part1, SomeSolution day08a))
--- , (mkDay_ 8 , (Part2, SomeSolution day08b))
--- , (mkDay_ 9 , (Part1, SomeSolution day09a))
--- , (mkDay_ 9 , (Part2, SomeSolution day09b))
--- , (mkDay_ 10, (Part1, SomeSolution day10a))
--- , (mkDay_ 10, (Part2, SomeSolution day10b))
--- , (mkDay_ 11, (Part1, SomeSolution day11a))
--- , (mkDay_ 11, (Part2, SomeSolution day11b))
--- , (mkDay_ 12, (Part1, SomeSolution day12a))
--- , (mkDay_ 12, (Part2, SomeSolution day12b))
--- , (mkDay_ 13, (Part1, SomeSolution day13a))
--- , (mkDay_ 13, (Part2, SomeSolution day13b))
--- , (mkDay_ 14, (Part1, SomeSolution day14a))
--- , (mkDay_ 14, (Part2, SomeSolution day14b))
--- , (mkDay_ 15, (Part1, SomeSolution day15a))
--- , (mkDay_ 15, (Part2, SomeSolution day15b))
--- , (mkDay_ 16, (Part1, SomeSolution day16a))
--- , (mkDay_ 16, (Part2, SomeSolution day16b))
--- , (mkDay_ 17, (Part1, SomeSolution day17a))
--- , (mkDay_ 17, (Part2, SomeSolution day17b))
--- , (mkDay_ 18, (Part1, SomeSolution day18a))
--- , (mkDay_ 18, (Part2, SomeSolution day18b))
--- , (mkDay_ 19, (Part1, SomeSolution day19a))
--- , (mkDay_ 19, (Part2, SomeSolution day19b))
--- , (mkDay_ 20, (Part1, SomeSolution day20a))
--- , (mkDay_ 20, (Part2, SomeSolution day20b))
--- , (mkDay_ 21, (Part1, SomeSolution day21a))
--- , (mkDay_ 21, (Part2, SomeSolution day21b))
--- , (mkDay_ 22, (Part1, SomeSolution day22a))
--- , (mkDay_ 22, (Part2, SomeSolution day22b))
--- , (mkDay_ 23, (Part1, SomeSolution day23a))
--- , (mkDay_ 23, (Part2, SomeSolution day23b))
--- , (mkDay_ 25, (Part1, SomeSolution day25a))
+solutionList = []
+--  [ (mkDay_ 1, (Part1, SomeSolution day01a))
+--  , (mkDay_ 1, (Part2, SomeSolution day01b))
+--  , (mkDay_ 2, (Part1, SomeSolution day02a))
+--  , (mkDay_ 2, (Part2, SomeSolution day02b))
+--  , (mkDay_ 3, (Part1, SomeSolution day03a))
+--  , (mkDay_ 3, (Part2, SomeSolution day03b))
+--  , (mkDay_ 4, (Part1, SomeSolution day04a))
+--  , (mkDay_ 4, (Part2, SomeSolution day04b))
+--  , (mkDay_ 5, (Part1, SomeSolution day05a))
+--  , (mkDay_ 5, (Part2, SomeSolution day05b))
+--  , (mkDay_ 6, (Part1, SomeSolution day06a))
+--  , (mkDay_ 6, (Part2, SomeSolution day06b))
+--  , (mkDay_ 7, (Part1, SomeSolution day07a))
+--  , (mkDay_ 7, (Part2, SomeSolution day07b))
+--  , (mkDay_ 8, (Part1, SomeSolution day08a))
+--  , (mkDay_ 8, (Part2, SomeSolution day08b))
+--  , (mkDay_ 9, (Part1, SomeSolution day09a))
+--  , (mkDay_ 9, (Part2, SomeSolution day09b))
+--  , (mkDay_ 10, (Part1, SomeSolution day10a))
+--  , (mkDay_ 10, (Part2, SomeSolution day10b))
+--  , (mkDay_ 11, (Part1, SomeSolution day11a))
+--  , (mkDay_ 11, (Part2, SomeSolution day11b))
+--  , (mkDay_ 12, (Part1, SomeSolution day12a))
+--  , (mkDay_ 12, (Part2, SomeSolution day12b))
+--  , (mkDay_ 13, (Part1, SomeSolution day13a))
+--  , (mkDay_ 13, (Part2, SomeSolution day13b))
+--  , (mkDay_ 14, (Part1, SomeSolution day14a))
+--  , (mkDay_ 14, (Part2, SomeSolution day14b))
+--  , (mkDay_ 15, (Part1, SomeSolution day15a))
+--  , (mkDay_ 15, (Part2, SomeSolution day15b))
+--  , (mkDay_ 16, (Part1, SomeSolution day16a))
+--  , (mkDay_ 16, (Part2, SomeSolution day16b))
+--  , (mkDay_ 17, (Part1, SomeSolution day17a))
+--  , (mkDay_ 17, (Part2, SomeSolution day17b))
+--  , (mkDay_ 18, (Part1, SomeSolution day18a))
+--  , (mkDay_ 18, (Part2, SomeSolution day18b))
+--  , (mkDay_ 19, (Part1, SomeSolution day19a))
+--  , (mkDay_ 19, (Part2, SomeSolution day19b))
+--  , (mkDay_ 20, (Part1, SomeSolution day20a))
+--  , (mkDay_ 20, (Part2, SomeSolution day20b))
+--  , (mkDay_ 21, (Part1, SomeSolution day21a))
+--  , (mkDay_ 21, (Part2, SomeSolution day21b))
+--  , (mkDay_ 22, (Part1, SomeSolution day22a))
+--  , (mkDay_ 22, (Part2, SomeSolution day22b))
+--  , (mkDay_ 23, (Part1, SomeSolution day23a))
+--  , (mkDay_ 23, (Part2, SomeSolution day23b))
+--  , (mkDay_ 24, (Part1, SomeSolution day24a))
+--  , (mkDay_ 24, (Part2, SomeSolution day24b))
+--  , (mkDay_ 25, (Part1, SomeSolution day25a))
+--  ]
 
 -- | Get a map of the completed solution parts for the given day.
 getDay :: ChallengeMap -> Day -> Either String (Map Part SomeSolution)
@@ -182,35 +182,35 @@ data ChallengeData = ChallengeData
  token is present in the given configuration.
 -}
 challengeData :: Config -> ChallengeSpec -> IO ChallengeData
-challengeData Config{..} spec@ChallengeSpec{..} = do
+challengeData cfg spec = do
   makeChallengePathDirs cps
   inp <-
     runExceptT
       . asum
-      $ [ maybeToEither [printf "Input file not found at %s" input]
-            =<< liftIO (readFileMaybe input)
+      $ [ maybeToEither [printf "Input file not found at %s" cps.input]
+            =<< liftIO (readFileMaybe cps.input)
         , fetchInput
         ]
   ts <-
-    readFileMaybe tests >>= \case
+    readFileMaybe cps.tests >>= \case
       Nothing -> pure []
-      Just s -> case MP.parse parseTests tests s of
+      Just s -> case MP.parse parseTests cps.tests s of
         -- Put [] in the IO functor (no test data), and print an error.
         Left e -> [] <$ putStrLn (MP.errorBundlePretty e)
         Right r -> pure r
 
   return ChallengeData{input = inp, tests = ts}
  where
-  cps@ChallengePaths{..} = challengePaths spec
+  cps = challengePaths spec
   fetchInput :: ExceptT [String] IO String
   fetchInput = do
-    sessKey <- maybeToEither ["Session key needed to fetch input"] session
-    let opts = defaultAoCOpts year sessKey
+    sessKey <- maybeToEither ["Session key needed to fetch input"] cfg.session
+    let opts = defaultAoCOpts cfg.year sessKey
     inp <- liftEither . bimap showAoCError T.unpack =<< liftIO (runAoC opts a)
-    liftIO $ writeFile input inp
+    liftIO $ writeFile cps.input inp
     pure inp
    where
-    a = AoCInput day
+    a = AoCInput spec.day
 
 -- | Input and expected answer for a single test.
 data TestData = TestData

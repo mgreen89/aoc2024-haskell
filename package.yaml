@@ -1,5 +1,5 @@
 name:                aoc2021
-version:             0.2.0.0
+version:             0.3.0.0
 github:              "mgreen89/aoc2021-haskell"
 license:             BSD3
 author:              "Matthew Green"
@@ -44,9 +44,11 @@ dependencies:
 - psqueues
 - recursion-schemes
 - safe
+- semigroupoids
 - split
 - text
 - time
+- transformers
 - unordered-containers
 - vector
 - yaml
@@ -77,6 +79,9 @@ default-extensions:
   - TypeApplications
   - TypeFamilies
   - ViewPatterns
+
+ghc-options:
+  - -Wall
 
 executables:
   aoc2021-exe:
