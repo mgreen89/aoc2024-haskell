@@ -1,10 +1,10 @@
-name:                aoc2021
+name:                aoc2024
 version:             0.3.0.0
-github:              "mgreen89/aoc2021-haskell"
+github:              "mgreen89/aoc2024-haskell"
 license:             BSD3
 author:              "Matthew Green"
 maintainer:          "mgreen89@gmail.com"
-copyright:           "2022 Matthew Green"
+copyright:           "2024 Matthew Green"
 
 extra-source-files:
 - README.md
@@ -20,7 +20,7 @@ description:         Please see the README on GitHub at <https://github.com/mgre
 
 dependencies:
 - base >= 4.7 && < 5
-- advent-of-code-api >= 0.2.8
+- advent-of-code-api >= 0.2.9
 - aeson
 - ansi-terminal
 - array
@@ -84,7 +84,7 @@ ghc-options:
   - -Wall
 
 executables:
-  aoc2021-exe:
+  aoc2024-exe:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
@@ -93,11 +93,11 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - aoc2021
+    - aoc2024
     - optparse-applicative
 
 tests:
-  aoc2021-test:
+  aoc2024-test:
     main:                Spec.hs
     source-dirs:         test
     ghc-options:
@@ -105,10 +105,10 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - aoc2021
+    - aoc2024
 
 benchmarks:
-  aoc2021-bench:
+  aoc2024-bench:
     main:                Bench.hs
     source-dirs:         bench
     ghc-options:
@@ -117,4 +117,4 @@ benchmarks:
     - -with-rtsopts=-N
     - -O2
     dependencies:
-    - aoc2021
+    - aoc2024

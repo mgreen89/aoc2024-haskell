@@ -1,6 +1,6 @@
 # Haskell Advent of Code
 
-Template for Advent of Code solutions in Haskell.
+Advent of Code 2024 Solutions in Haskell
 
 ## Running
 
@@ -24,7 +24,3 @@ Most of the framework code here was very heavily based on https://github.com/mst
 
 I started from a blank slate and re-implemented it (mostly in a pretty similar fashion) to help get my head around it.
 I've ignored anything I didn't understand (for now), so this has less functionality, but enough for me to be happy using it.
-
-## To-do
-
-- Add functionality to pass test-specific parameters to solution functions.
