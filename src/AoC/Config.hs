@@ -21,12 +21,16 @@ data Config = Config
   -- ^ default: 'Nothing'
   , year :: Integer
   -- ^ default: 2020
+  , repo :: Maybe String
+  -- ^ default: 'Nothing'
+  , email :: Maybe String
+  -- ^ default: 'Nothing'
   }
   deriving (Generic, Show)
 
 -- | Default configuration.
 instance Default Config where
-  def = Config{session = Nothing, year = 2020}
+  def = Config{session = Nothing, year = 2020, repo = Nothing, email = Nothing}
 
 -- | Default configuration file path.
 defConfPath :: FilePath

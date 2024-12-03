@@ -206,7 +206,9 @@ challengeData cfg spec = do
   fetchInput :: ExceptT [String] IO String
   fetchInput = do
     sessKey <- maybeToEither ["Session key needed to fetch input"] cfg.session
-    let opts = defaultAoCOpts (AoCUserAgent (T.pack "") (T.pack "")) cfg.year sessKey
+    repo <- maybeToEither ["Repository URL required for user agent to fetch input"] cfg.repo
+    email <- maybeToEither ["Email required for user agent to fetch input"] cfg.email
+    let opts = defaultAoCOpts (AoCUserAgent (T.pack repo) (T.pack email)) cfg.year sessKey
     inp <- liftEither . bimap showAoCError T.unpack =<< liftIO (runAoC opts a)
     liftIO $ writeFile cps.input inp
     pure inp
