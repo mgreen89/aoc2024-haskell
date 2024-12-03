@@ -5,8 +5,10 @@ module AoC.Challenge.Day01 (
 where
 
 import AoC.Solution
+import AoC.Util (freqs)
 import Data.Bifunctor (first)
 import Data.List (sort)
+import qualified Data.Map as M
 import Data.Void (Void)
 import qualified Text.Megaparsec as MP
 import qualified Text.Megaparsec.Char as MP
@@ -20,13 +22,29 @@ parser =
     b <- MPL.decimal
     pure (a, b)
 
-day01a :: Solution [(Int, Int)] Int
+parse :: String -> Either String ([Int], [Int])
+parse =
+  fmap unzip . first MP.errorBundlePretty . MP.parse parser "day01"
+
+day01a :: Solution ([Int], [Int]) Int
 day01a =
   Solution
-    { sParse = first MP.errorBundlePretty . MP.parse parser "day01"
+    { sParse = parse
     , sShow = show
-    , sSolve = Right . sum . fmap abs . (\(xs, ys) -> zipWith (-) (sort xs) (sort ys)) . unzip
+    , sSolve =
+        Right
+          . sum
+          . fmap abs
+          . (\(xs, ys) -> zipWith (-) (sort xs) (sort ys))
     }
 
-day01b :: Solution [(Int, Int)] Int
-day01b = Solution{sParse = first MP.errorBundlePretty . MP.parse parser "day01", sShow = show, sSolve = Right}
+day01b :: Solution ([Int], [Int]) Int
+day01b =
+  Solution
+    { sParse = parse
+    , sShow = show
+    , sSolve =
+        Right
+          . sum
+          . (\(xs, ys) -> fmap (\x -> x * M.findWithDefault 0 x (freqs ys)) xs)
+    }
