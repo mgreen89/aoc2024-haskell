@@ -16,6 +16,7 @@ import AoC.Util
 import Control.DeepSeq
 import Control.Exception
 import Control.Monad
+import Control.Monad.IO.Class (liftIO, MonadIO)
 import Control.Monad.Except
 import Criterion
 import Data.Bifunctor
@@ -23,6 +24,7 @@ import Data.Foldable
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Text (Text)
+import qualified Data.Text as T
 import qualified System.Console.ANSI as ANSI
 import Text.Printf
 
@@ -100,7 +102,7 @@ mainSubmit cfg so = do
       $ runSomeSolution sol inp
   liftIO $ printf "Submitting solution %s\n" res
 
-  let opts = defaultAoCOpts cfg.year sessKey
+  let opts = defaultAoCOpts (AoCUserAgent (T.pack "") (T.pack "")) cfg.year sessKey
       submit = runAoC opts (AoCSubmit so.spec.day so.spec.part res)
   output@(_, status) <- liftEither . first showAoCError =<< liftIO submit
 

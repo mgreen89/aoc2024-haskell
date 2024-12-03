@@ -49,6 +49,7 @@ import Control.Applicative
 import Control.DeepSeq
 import Control.Exception
 import Control.Monad
+import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Except
 import Data.Bifunctor
 import Data.Foldable
@@ -75,8 +76,8 @@ challengeMap =
 
 -- | List of all the completed solutions.
 solutionList :: [(Day, (Part, SomeSolution))]
-solutionList = []
---  [ (mkDay_ 1, (Part1, SomeSolution day01a))
+solutionList =
+  [ (mkDay_ 1, (Part1, SomeSolution day01a))
 --  , (mkDay_ 1, (Part2, SomeSolution day01b))
 --  , (mkDay_ 2, (Part1, SomeSolution day02a))
 --  , (mkDay_ 2, (Part2, SomeSolution day02b))
@@ -125,7 +126,7 @@ solutionList = []
 --  , (mkDay_ 24, (Part1, SomeSolution day24a))
 --  , (mkDay_ 24, (Part2, SomeSolution day24b))
 --  , (mkDay_ 25, (Part1, SomeSolution day25a))
---  ]
+ ]
 
 -- | Get a map of the completed solution parts for the given day.
 getDay :: ChallengeMap -> Day -> Either String (Map Part SomeSolution)
@@ -205,7 +206,7 @@ challengeData cfg spec = do
   fetchInput :: ExceptT [String] IO String
   fetchInput = do
     sessKey <- maybeToEither ["Session key needed to fetch input"] cfg.session
-    let opts = defaultAoCOpts cfg.year sessKey
+    let opts = defaultAoCOpts (AoCUserAgent (T.pack "") (T.pack "")) cfg.year sessKey
     inp <- liftEither . bimap showAoCError T.unpack =<< liftIO (runAoC opts a)
     liftIO $ writeFile cps.input inp
     pure inp
