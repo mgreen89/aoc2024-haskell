@@ -16,8 +16,8 @@ import AoC.Util
 import Control.DeepSeq
 import Control.Exception
 import Control.Monad
-import Control.Monad.IO.Class (liftIO, MonadIO)
 import Control.Monad.Except
+import Control.Monad.IO.Class (MonadIO, liftIO)
 import Criterion
 import Data.Bifunctor
 import Data.Foldable

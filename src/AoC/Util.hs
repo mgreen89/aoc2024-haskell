@@ -43,13 +43,13 @@ stripNewlines = reverse . dropWhile (== '\n') . reverse
 {- | Convert an 'Either' into a 'Maybe' (or any other 'Alternative' instance),
  dropping the error value.
 -}
-eitherToMaybe :: Alternative m => Either e a -> m a
+eitherToMaybe :: (Alternative m) => Either e a -> m a
 eitherToMaybe = either (const empty) pure
 
 {- | Conver a 'Maybe' into an 'Either' (or any other 'MonadError' instance),
  using the provided error value if necessary.
 -}
-maybeToEither :: MonadError e m => e -> Maybe a -> m a
+maybeToEither :: (MonadError e m) => e -> Maybe a -> m a
 maybeToEither e = maybe (throwError e) pure
 
 --------------------------------------

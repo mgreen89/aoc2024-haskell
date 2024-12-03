@@ -4,7 +4,8 @@
 {-# OPTIONS_GHC -Wno-unused-top-binds #-}
 
 module AoC.Challenge.Day23 (
-  )
+
+)
 where
 
 -- day23a
