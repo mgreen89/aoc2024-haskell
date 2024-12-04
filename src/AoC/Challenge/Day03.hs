@@ -1,15 +1,8 @@
-{-# LANGUAGE PartialTypeSignatures #-}
-{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
-{-# OPTIONS_GHC -Wno-unused-imports #-}
-{-# OPTIONS_GHC -Wno-unused-top-binds #-}
-
 module AoC.Challenge.Day03 (
   day03a,
+  day03b,
 )
 where
-
--- day03a
--- , day03b
 
 import AoC.Solution
 import Data.Bifunctor (first)
@@ -18,23 +11,45 @@ import qualified Text.Megaparsec as MP
 import qualified Text.Megaparsec.Char as MP
 import qualified Text.Megaparsec.Char.Lexer as MPL
 
-parser :: MP.Parsec Void String [Int]
-parser =
-  MP.some (MP.try (MP.skipManyTill MP.anySingle (MP.try mul)))
+dropUntil :: MP.Parsec Void String a -> MP.Parsec Void String a
+dropUntil = MP.try . MP.skipManyTill MP.anySingle . MP.try
+
+mul :: MP.Parsec Void String Int
+mul = do
+  MP.string "mul("
+  a <- MPL.decimal
+  MP.char ','
+  b <- MPL.decimal
+  MP.char ')'
+  pure $ a * b
+
+parserA :: MP.Parsec Void String Int
+parserA = sum <$> MP.some (dropUntil mul)
+
+parseA :: String -> Either String Int
+parseA =
+  first MP.errorBundlePretty . MP.parse parserA "day03a"
+
+day03a :: Solution Int Int
+day03a = Solution{sParse = parseA, sShow = show, sSolve = Right}
+
+parserB :: MP.Parsec Void String Int
+parserB =
+  sum <$> enabled
  where
-  mul :: MP.Parsec Void String Int
-  mul = MP.between (MP.string "mul(") (MP.char ')') $ do
-    a <- MPL.decimal
-    MP.char ','
-    b <- MPL.decimal
-    pure $ a * b
+  enabled :: MP.Parsec Void String [Int]
+  enabled =
+      MP.option [] . dropUntil $ MP.choice
+        [ MP.string "don't()" *> disabled
+        , (:) <$> mul <*> enabled
+        ]
 
-parse :: String -> Either String [Int]
-parse =
-  first MP.errorBundlePretty . MP.parse parser "day03"
+  disabled :: MP.Parsec Void String [Int]
+  disabled = MP.option [] $ dropUntil (MP.string "do()") *> enabled
 
-day03a :: Solution [Int] Int
-day03a = Solution{sParse = parse, sShow = show, sSolve = Right . sum}
+parseB :: String -> Either String Int
+parseB =
+  first MP.errorBundlePretty . MP.parse parserB "day03b"
 
-day03b :: Solution _ _
-day03b = Solution{sParse = Right, sShow = show, sSolve = Right}
+day03b :: Solution Int Int
+day03b = Solution{sParse = parseB, sShow = show, sSolve = Right}
