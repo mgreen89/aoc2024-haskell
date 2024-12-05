@@ -1,14 +1,8 @@
-{-# LANGUAGE PartialTypeSignatures #-}
-{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
-{-# OPTIONS_GHC -Wno-unused-imports #-}
-{-# OPTIONS_GHC -Wno-unused-top-binds #-}
-
 module AoC.Challenge.Day05 (
   day05a,
+  day05b,
 )
 where
-
--- , day05b
 
 import AoC.Solution
 import Data.Bifunctor (first)
@@ -74,4 +68,16 @@ day05a =
     }
 
 day05b :: Solution _ _
-day05b = Solution{sParse = Right, sShow = show, sSolve = Right}
+day05b =
+  Solution
+    { sParse = parse
+    , sShow = show
+    , sSolve =
+        Right . \(rs, pss) ->
+          sum
+            [ fromMaybe 0 $ middle ordered
+            | test <- pss
+            , let ordered = applyRules (rulesGraph rs) test
+            , test /= ordered
+            ]
+    }
