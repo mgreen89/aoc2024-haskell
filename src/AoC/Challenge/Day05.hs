@@ -6,7 +6,6 @@ where
 
 import AoC.Solution
 import Data.Bifunctor (first)
-import qualified Data.Graph as G
 import qualified Data.Graph.Inductive as G
 import Data.Maybe (fromMaybe)
 import qualified Data.Set as S
@@ -67,7 +66,7 @@ day05a =
             ]
     }
 
-day05b :: Solution _ _
+day05b :: Solution ([V2 Int], [[Int]]) Int
 day05b =
   Solution
     { sParse = parse
