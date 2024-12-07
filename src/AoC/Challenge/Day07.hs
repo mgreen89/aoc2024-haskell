@@ -1,14 +1,8 @@
-{-# LANGUAGE PartialTypeSignatures #-}
-{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
-{-# OPTIONS_GHC -Wno-unused-imports #-}
-{-# OPTIONS_GHC -Wno-unused-top-binds #-}
-
 module AoC.Challenge.Day07 (
   day07a,
+  day07b,
 )
 where
-
--- , day07b
 
 import AoC.Solution
 import Control.Monad (guard)
@@ -37,18 +31,21 @@ parse :: String -> Either String [(Int, NonEmpty Int)]
 parse =
   first MP.errorBundlePretty . MP.parse parser "day07"
 
-solveA :: [(Int, NonEmpty Int)] -> Int
-solveA =
+solve :: [Int -> Int -> Int] -> [(Int, NonEmpty Int)] -> Int
+solve ops =
   sum . mapMaybe go
  where
   go :: (Int, NonEmpty Int) -> Maybe Int
   go (tgt, x NE.:| xs) = guard (tgt `elem` foldl' go' [x] xs) $> tgt
 
   go' :: [Int] -> Int -> [Int]
-  go' cs x = [op a x | op <- [(*), (+)], a <- cs]
+  go' cs x = [op a x | op <- ops, a <- cs]
 
 day07a :: Solution [(Int, NonEmpty Int)] Int
-day07a = Solution{sParse = parse, sShow = show, sSolve = Right . solveA}
+day07a = Solution{sParse = parse, sShow = show, sSolve = Right . solve [(+), (*)]}
 
-day07b :: Solution _ _
-day07b = Solution{sParse = Right, sShow = show, sSolve = Right}
+cat :: Int -> Int -> Int
+cat x y = read (show x ++ show y) -- eww
+
+day07b :: Solution [(Int, NonEmpty Int)] Int
+day07b = Solution{sParse = parse, sShow = show, sSolve = Right . solve [(+), (*), cat]}
