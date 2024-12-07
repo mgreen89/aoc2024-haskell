@@ -1,15 +1,8 @@
-{-# LANGUAGE PartialTypeSignatures #-}
-{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
-{-# OPTIONS_GHC -Wno-unused-imports #-}
-{-# OPTIONS_GHC -Wno-unused-top-binds #-}
-
 module AoC.Challenge.Day06 (
   day06a,
+  day06b,
 )
 where
-
---
--- , day06b
 
 import AoC.Common.Point (Dir (..), boundingBox', dirPoint, dirRot, inBoundingBox)
 import AoC.Solution
@@ -58,5 +51,42 @@ solveA (blocks, startPos) =
 day06a :: Solution (Set (V2 Int), V2 Int) Int
 day06a = Solution{sParse = Right . parse, sShow = show, sSolve = Right . solveA}
 
-day06b :: Solution _ _
-day06b = Solution{sParse = Right, sShow = show, sSolve = Right}
+stepWithHistory ::
+  Set (V2 Int) ->
+  ((V2 Int, Dir), Set (V2 Int, Dir)) ->
+  Either ((V2 Int, Dir), Set (V2 Int, Dir)) ((V2 Int, Dir), Set (V2 Int, Dir))
+stepWithHistory blocks ((p, d), h) =
+  if (p', d') `S.member` h
+    then Left ((p', d'), h)
+    else Right ((p', d'), S.insert (p', d') h)
+ where
+  (p', d') = step blocks (p, d)
+
+doesLoop :: (Set (V2 Int), V2 Int) -> Bool
+doesLoop (blocks, startPos) =
+  go (startPos, U) S.empty
+ where
+  go x h = case stepWithHistory blocks (x, h) of
+    Left _ -> True
+    Right ((p, d), h') -> inBoundingBox bb p && go (p, d) h'
+  bb = fromMaybe (V2 0 0, V2 0 0) (boundingBox' blocks)
+
+solveB :: (Set (V2 Int), V2 Int) -> Int
+solveB (blocks, startPos) =
+  length
+    . filter id
+    . fmap (doesLoop . (,startPos) . (`S.insert` blocks))
+    $ possBlocks
+ where
+  (V2 xMin yMin, V2 xMax yMax) = fromMaybe (V2 0 0, V2 0 0) (boundingBox' blocks)
+  possBlocks =
+    [ p
+    | x <- [xMin .. xMax]
+    , y <- [yMin .. yMax]
+    , let p = V2 x y
+    , not (S.member p blocks)
+    , p /= startPos
+    ]
+
+day06b :: Solution (Set (V2 Int), V2 Int) Int
+day06b = Solution{sParse = Right . parse, sShow = show, sSolve = Right . solveB}
