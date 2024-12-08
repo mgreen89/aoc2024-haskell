@@ -4,7 +4,14 @@ module AoC.Challenge.Day06 (
 )
 where
 
-import AoC.Common.Point (Dir (..), boundingBox', dirPoint, dirRot, inBoundingBox)
+import AoC.Common.Point (
+  Dir (..),
+  boundingBox',
+  dirPoint,
+  dirRot,
+  inBoundingBox,
+  parse2dCharMap,
+ )
 import AoC.Solution
 import Data.Bifunctor (bimap)
 import Data.Map (Map)
@@ -16,11 +23,7 @@ import Linear (V2 (..))
 
 parseMap :: (Char -> Maybe a) -> String -> Map (V2 Int) a
 parseMap f =
-  M.mapMaybe f
-    . M.fromList
-    . concat
-    . zipWith (\y -> zipWith (\x -> (V2 x y,)) [0 ..]) [0 ..]
-    . lines
+  M.mapMaybe f . parse2dCharMap
 
 parse :: String -> (Set (V2 Int), V2 Int)
 parse = bimap M.keysSet (fst . M.findMin) . M.partition id . parseMap x

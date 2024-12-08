@@ -10,6 +10,8 @@ module AoC.Common.Point (
   boundingBox',
   inBoundingBox,
   parse2dMap,
+  parse2dCharMap,
+  parse2dReadMap,
   Dir (..),
   dirRot,
   dirPoint,
@@ -70,17 +72,24 @@ inBoundingBox (bMin, bMax) p = and $ go <$> p <*> bMin <*> bMax
  where
   go cp cmin cmax = cp >= cmin && cp <= cmax
 
--- | Parse String data into a Map
-parse2dMap :: (Read a) => String -> Either String (Map (V2 Int) a)
-parse2dMap = fmap createMap . traverse (traverse (readEither . pure)) . lines
- where
-  createMap :: [[a]] -> Map (V2 Int) a
-  createMap =
-    M.fromList
-      . concat
-      . zipWith
-        (\y -> zipWith (\x -> (V2 x y,)) [0 ..])
-        [0 ..]
+-- | Parse data into a 2D Map
+parse2dMap :: [[a]] -> Map (V2 Int) a
+parse2dMap =
+  M.fromList
+    . concat
+    . zipWith (\y -> zipWith (\x -> (V2 x y,)) [0 ..]) [0 ..]
+
+-- | Parse String data into a 2D Map
+parse2dCharMap :: String -> Map (V2 Int) Char
+parse2dCharMap =
+  parse2dMap . lines
+
+-- | Parse `Read`able into a 2D Map
+parse2dReadMap :: (Read a) => String -> Either String (Map (V2 Int) a)
+parse2dReadMap =
+  fmap parse2dMap
+    . traverse (traverse (readEither . pure))
+    . lines
 
 {- | Direction
 Up, Right, Left and Down.

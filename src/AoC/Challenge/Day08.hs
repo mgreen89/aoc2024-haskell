@@ -4,7 +4,8 @@ module AoC.Challenge.Day08 (
 )
 where
 
-import AoC.Common.Point (boundingBox', inBoundingBox)
+import AoC.Common (combinations)
+import AoC.Common.Point (boundingBox', inBoundingBox, parse2dCharMap)
 
 import AoC.Solution
 import Data.Map (Map)
@@ -14,30 +15,17 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Linear (V2 (..))
 
-parseMap :: String -> Map (V2 Int) Char
-parseMap =
-  M.fromList
-    . concat
-    . zipWith (\y -> zipWith (\x -> (V2 x y,)) [0 ..]) [0 ..]
-    . lines
-
 parse :: String -> (Map (V2 Int) Char, (V2 Int, V2 Int))
 parse s =
   (M.mapMaybe f m, fromMaybe (V2 0 0, V2 0 0) (boundingBox' (M.keys m)))
  where
   m :: Map (V2 Int) Char
-  m = parseMap s
+  m = parse2dCharMap s
 
   f :: Char -> Maybe Char
   f = \case
     '.' -> Nothing
     c -> Just c
-
--- Must be a nicer way to do this!
-combin2 :: [a] -> [(a, a)]
-combin2 [] = []
-combin2 [_] = []
-combin2 (x : ys) = [(x, y) | y <- ys] ++ combin2 ys
 
 getAntinodesA :: (V2 Int, V2 Int) -> V2 Int -> V2 Int -> [V2 Int]
 getAntinodesA bb a1 a2 =
@@ -64,7 +52,7 @@ solve getAntinodes as =
     S.union antinodes
       . S.fromList
       . concatMap (uncurry getAntinodes)
-      $ combin2 (S.toList antennas)
+      $ combinations (S.toList antennas)
 
 day08a :: Solution (Map (V2 Int) Char, (V2 Int, V2 Int)) Int
 day08a =

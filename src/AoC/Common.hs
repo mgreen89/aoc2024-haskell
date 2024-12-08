@@ -2,10 +2,12 @@ module AoC.Common (
   (!?),
   windows,
   pairs,
+  combinations,
   listTup2,
   listTup3,
 ) where
 
+import Data.Foldable (foldl')
 import Data.List (tails)
 
 -- Safe, strict, list index
@@ -22,6 +24,15 @@ windows n = foldr (zipWith (:)) (repeat []) . take n . tails
 pairs :: [a] -> [(a, a)]
 pairs (x : y : z) = (x, y) : pairs (y : z)
 pairs _ = []
+
+-- | Get all 2-combinations of list elements.
+combinations :: [a] -> [(a, a)]
+combinations = reverse . go []
+ where
+  go :: [(a, a)] -> [a] -> [(a, a)]
+  go acc [] = acc
+  go acc [_] = acc
+  go acc (x : ys) = go (foldl' (\a y -> (x, y) : a) acc ys) ys
 
 -- | Safely convert a list to a 2-tuple of the elements.
 listTup2 :: [a] -> Maybe (a, a)
