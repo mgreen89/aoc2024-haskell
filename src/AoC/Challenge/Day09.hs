@@ -1,20 +1,16 @@
-{-# LANGUAGE PartialTypeSignatures #-}
-{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
-{-# OPTIONS_GHC -Wno-unused-imports #-}
-{-# OPTIONS_GHC -Wno-unused-top-binds #-}
-
 module AoC.Challenge.Day09 (
   day09a,
+  day09b,
 )
 where
 
---
--- , day09b
-
 import AoC.Solution
-import Data.Foldable (Foldable, toList)
+import Data.Foldable (toList)
+import Data.IntMap (IntMap)
+import qualified Data.IntMap as IM
 import Data.Sequence (Seq)
 import qualified Data.Sequence as S
+import Safe (headMay)
 import Text.Read (readEither)
 
 parse :: String -> Either String [Int]
@@ -46,5 +42,40 @@ solveA = chksum . compact . toSeq
 day09a :: Solution [Int] Int
 day09a = Solution{sParse = parse, sShow = show, sSolve = Right . solveA}
 
-day09b :: Solution _ _
-day09b = Solution{sParse = Right, sShow = show, sSolve = Right}
+toMaps :: [Int] -> (IntMap (Int, Int), IntMap Int)
+toMaps = go 0 0 IM.empty IM.empty
+ where
+  go _ _ fs ss [] = (fs, ss)
+  go pos fid fs ss [f] = (IM.insert pos (fid, f) fs, ss)
+  go pos fid fs ss (f : s : rest) =
+    go
+      (pos + f + s)
+      (fid + 1)
+      (IM.insert pos (fid, f) fs)
+      (IM.insert (pos + f) s ss)
+      rest
+
+compactFiles :: (IntMap (Int, Int), IntMap Int) -> Int
+compactFiles (fs, ss) =
+  fst $ IM.foldrWithKey go (0, ss) fs
+ where
+  go :: Int -> (Int, Int) -> (Int, IntMap Int) -> (Int, IntMap Int)
+  go bid (fid, flen) (chk, spaces) = case findSpace spaces bid flen of
+    Just (i, l) ->
+      ( chk + (sum . fmap (* fid) . take flen $ [i ..])
+      , IM.insert (i + flen) (l - flen) . IM.delete i $ spaces
+      )
+    Nothing -> (chk + (sum . fmap (* fid) . take flen $ [bid ..]), spaces)
+
+  findSpace spaces fid flen =
+    headMay
+      . dropWhile ((< flen) . snd)
+      . IM.toAscList
+      . IM.takeWhileAntitone (< fid)
+      $ spaces
+
+solveB :: [Int] -> Int
+solveB = compactFiles . toMaps
+
+day09b :: Solution [Int] Int
+day09b = Solution{sParse = parse, sShow = show, sSolve = Right . solveB}
