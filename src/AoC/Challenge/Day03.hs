@@ -39,7 +39,8 @@ parserB =
  where
   enabled :: MP.Parsec Void String [Int]
   enabled =
-      MP.option [] . dropUntil $ MP.choice
+    MP.option [] . dropUntil $
+      MP.choice
         [ MP.string "don't()" *> disabled
         , (:) <$> mul <*> enabled
         ]
