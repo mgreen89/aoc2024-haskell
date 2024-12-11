@@ -1,14 +1,8 @@
-{-# LANGUAGE PartialTypeSignatures #-}
-{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
-{-# OPTIONS_GHC -Wno-unused-imports #-}
-{-# OPTIONS_GHC -Wno-unused-top-binds #-}
-
 module AoC.Challenge.Day11 (
   day11a,
+  day11b,
 )
 where
-
--- , day11b
 
 import AoC.Solution
 import Data.Bifunctor (first)
@@ -51,5 +45,13 @@ day11a =
           . fmap (`steps` 25)
     }
 
-day11b :: Solution _ _
-day11b = Solution{sParse = Right, sShow = show, sSolve = Right}
+day11b :: Solution [Int] Int
+day11b =
+  Solution
+    { sParse = parse
+    , sShow = show
+    , sSolve =
+        Right
+          . sum
+          . fmap (`steps` 75)
+    }
