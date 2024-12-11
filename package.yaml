@@ -36,6 +36,7 @@ dependencies:
 - lens
 - linear
 - megaparsec >= 8.0
+- MemoTrie
 - monad-loops
 - mtl
 - nonempty-containers
