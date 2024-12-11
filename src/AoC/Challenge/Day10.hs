@@ -1,14 +1,8 @@
-{-# LANGUAGE PartialTypeSignatures #-}
-{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
-{-# OPTIONS_GHC -Wno-unused-imports #-}
-{-# OPTIONS_GHC -Wno-unused-top-binds #-}
-
 module AoC.Challenge.Day10 (
   day10a,
+  day10b,
 )
 where
-
--- , day10b
 
 import AoC.Common.Point (cardinalNeighbs, parse2dCharMap)
 import AoC.Solution
@@ -45,5 +39,23 @@ solveA topo =
 day10a :: Solution (Map (V2 Int) Int) Int
 day10a = Solution{sParse = Right . parse, sShow = show, sSolve = Right . solveA}
 
-day10b :: Solution _ _
-day10b = Solution{sParse = Right, sShow = show, sSolve = Right}
+solveB :: Map (V2 Int) Int -> Int
+solveB topo =
+  sum
+    . M.elems
+    . M.mapWithKey (\k _ -> bfs 0 $ [k])
+    . M.filter (== 0)
+    $ topo
+ where
+  bfs :: Int -> [V2 Int] -> Int
+  bfs 9 curr = length curr
+  bfs lvl curr =
+    bfs (lvl + 1)
+      . fmap fst
+      . filter ((== Just (lvl + 1)) . snd)
+      . fmap (\p -> (p, topo M.!? p))
+      . concatMap cardinalNeighbs
+      $ curr
+
+day10b :: Solution (Map (V2 Int) Int) Int
+day10b = Solution{sParse = Right . parse, sShow = show, sSolve = Right . solveB}
