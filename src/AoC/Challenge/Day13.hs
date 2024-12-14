@@ -1,21 +1,15 @@
-{-# LANGUAGE PartialTypeSignatures #-}
-{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
-{-# OPTIONS_GHC -Wno-unused-imports #-}
-{-# OPTIONS_GHC -Wno-unused-top-binds #-}
-
 module AoC.Challenge.Day13 (
   day13a,
+  day13b,
 )
 where
-
---
--- , day13b
 
 import AoC.Solution
 import Data.Bifunctor (first)
 import Data.Maybe (mapMaybe)
 import Data.Void (Void)
-import Linear (V2 (..))
+import Debug.Trace
+import Linear (V2 (..), (*^))
 import qualified Text.Megaparsec as MP
 import qualified Text.Megaparsec.Char as MP
 import qualified Text.Megaparsec.Char.Lexer as MPL
@@ -46,6 +40,7 @@ parse =
   first MP.errorBundlePretty . MP.parse parser "day13"
 
 -- | Solve the simeltaneous equations and return (if possible) and integer solution.
+
 {- Slightly simplified initial example to help work out.
 94a + 22b = 840
 34a + 67b = 540
@@ -69,5 +64,25 @@ day13a =
     , sSolve = Right . sum . fmap (\(a, b) -> 3 * a + b) . mapMaybe solveSimel
     }
 
-day13b :: Solution _ _
-day13b = Solution{sParse = Right, sShow = show, sSolve = Right}
+check :: (V2 Int, V2 Int, V2 Int) -> (Int, Int) -> Bool
+check (m, n, t) (a, b) = (a *^ m) + (b *^ n) == t
+
+day13b :: Solution [(V2 Int, V2 Int, V2 Int)] Int
+day13b =
+  Solution
+    { sParse = parse
+    , sShow = show
+    , sSolve =
+        Right
+          . sum
+          . fmap ((\(a, b) -> 3 * a + b) . snd)
+          -- Unsure why this is required after the divMod checks?
+          . filter (uncurry check)
+          . mapMaybe
+            ( \(m, n, t) ->
+                sequenceA
+                  ( (m, n, fmap (+ 10000000000000) t)
+                  , solveSimel (m, n, fmap (+ 10000000000000) t)
+                  )
+            )
+    }
