@@ -8,7 +8,6 @@ import AoC.Solution
 import Data.Bifunctor (first)
 import Data.Maybe (mapMaybe)
 import Data.Void (Void)
-import Debug.Trace
 import Linear (V2 (..), (*^))
 import qualified Text.Megaparsec as MP
 import qualified Text.Megaparsec.Char as MP

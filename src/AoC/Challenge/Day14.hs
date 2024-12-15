@@ -17,7 +17,6 @@ import qualified Text.Megaparsec.Char as MP
 import qualified Text.Megaparsec.Char.Lexer as MPL
 import Data.Foldable (minimumBy)
 import Data.Function (on)
-import Debug.Trace
 
 parser :: MP.Parsec Void String [(V2 Int, V2 Int)]
 parser =
