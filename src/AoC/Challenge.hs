@@ -105,7 +105,7 @@ solutionList =
   , (mkDay_ 13, (Part2, SomeSolution day13b))
   , (mkDay_ 14, (Part1, SomeSolution day14a))
   , (mkDay_ 14, (Part2, SomeSolution day14b))
-  --  , (mkDay_ 15, (Part1, SomeSolution day15a))
+  , (mkDay_ 15, (Part1, SomeSolution day15a))
   --  , (mkDay_ 15, (Part2, SomeSolution day15b))
   --  , (mkDay_ 16, (Part1, SomeSolution day16a))
   --  , (mkDay_ 16, (Part2, SomeSolution day16b))
@@ -226,9 +226,9 @@ parseTests = MP.many parseTest <* MP.eof
 
 parseTest :: MP.Parsec Void String TestData
 parseTest = do
-  inp <- MP.manyTill MP.anySingle $ MP.lookAhead (MP.string ">>>")
+  inp <- MP.manyTill MP.anySingle $ MP.lookAhead (MP.string "\n>>>")
   ans <-
-    MP.string ">>>"
+    MP.string "\n>>>"
       *> MP.space1
       *> MP.many (MP.anySingleBut '\n')
       <* (MP.single '\n' <|> ('\n' <$ MP.lookAhead MP.eof))

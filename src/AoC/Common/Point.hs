@@ -13,6 +13,7 @@ module AoC.Common.Point (
   parse2dCharMap,
   parse2dReadMap,
   Dir (..),
+  dirFromArrow,
   dirRot,
   dirPoint,
 ) where
@@ -95,6 +96,15 @@ parse2dReadMap =
 Up, Right, Left and Down.
 -}
 data Dir = U | R | D | L deriving (Show, Eq, Ord, Enum, Generic, NFData)
+
+-- | Parse a direction from an "arrow" character
+dirFromArrow :: Char -> Either String Dir
+dirFromArrow = \case
+ '^' -> Right U
+ '>' -> Right R
+ 'v' -> Right D
+ '<' -> Right L
+ x -> Left ("Invalid direction arrow: " ++ [x])
 
 -- | Rotate a direction.
 dirRot :: Dir -> Dir -> Dir
