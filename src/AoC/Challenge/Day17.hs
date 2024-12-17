@@ -1,22 +1,16 @@
-{-# LANGUAGE PartialTypeSignatures #-}
-{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
-{-# OPTIONS_GHC -Wno-unused-imports #-}
-{-# OPTIONS_GHC -Wno-unused-top-binds #-}
-
 module AoC.Challenge.Day17 (
   day17a,
+  day17b,
 )
 where
 
--- day17a
--- , day17b
-
 import AoC.Solution
 import Control.DeepSeq (NFData)
+import Data.Array (Array)
 import qualified Data.Array as A
 import qualified Data.Array.IArray as IA
 import Data.Bifunctor (first)
-import Data.Bits ((.&.), (.^.))
+import Data.Bits (shiftL, shiftR, (.&.), (.^.))
 import Data.List (intercalate)
 import Data.Void (Void)
 import GHC.Generics (Generic)
@@ -62,7 +56,7 @@ data ComputerState = CS
   }
   deriving (Eq, Generic, NFData, Show)
 
-parser :: MP.Parsec Void String (ComputerState, [Inst])
+parser :: MP.Parsec Void String (ComputerState, Array Int Inst, [Int])
 parser = do
   a <- MP.string "Register A: " *> MPL.decimal <* MP.newline
   b <- MP.string "Register B: " *> MPL.decimal <* MP.newline
@@ -70,9 +64,10 @@ parser = do
   MP.newline
   MP.string "Program: "
   insts <- MP.sepBy MPL.decimal (MP.char ',')
-  pure (CS 0 a b c [], parseInsts insts)
+  let parsed = parseInsts insts
+  pure (CS 0 a b c [], A.listArray (0, length parsed - 1) parsed, insts)
 
-parse :: String -> Either String (ComputerState, [Inst])
+parse :: String -> Either String (ComputerState, Array Int Inst, [Int])
 parse =
   first MP.errorBundlePretty . MP.parse parser "day17"
 
@@ -89,30 +84,53 @@ comboVal _ _ = error "Invalid combo operand!"
 
 step :: Inst -> ComputerState -> ComputerState
 step i cs = (\s -> s{inst_ptr = s.inst_ptr + 1}) $ case i of
-  Adv x -> cs{a = cs.a `div` (2 ^ comboVal cs x)}
+  Adv x -> cs{a = cs.a `shiftR` comboVal cs x}
   Bxl x -> cs{b = cs.b .^. x}
   Bst x -> cs{b = comboVal cs x .&. 7}
   Jnz x -> if cs.a == 0 then cs else cs{inst_ptr = x - 1}
   Bxc _ -> cs{b = cs.b .^. cs.c}
   Out x -> cs{outs = (comboVal cs x .&. 7) : cs.outs}
-  Bdv x -> cs{b = cs.a `div` (2 ^ comboVal cs x)}
-  Cdv x -> cs{c = cs.a `div` (2 ^ comboVal cs x)}
+  Bdv x -> cs{b = cs.a `shiftR` comboVal cs x}
+  Cdv x -> cs{c = cs.a `shiftR` comboVal cs x}
 
-solveA :: (ComputerState, [Inst]) -> String
-solveA (initCs, instl) = present $ go initCs
+solveA :: (ComputerState, Array Int Inst, [Int]) -> String
+solveA (initCs, instrs, _) = present $ go initCs
  where
-  is = A.listArray (0, length instl - 1) instl
-
   go :: ComputerState -> ComputerState
-  go cs = case is IA.!? cs.inst_ptr of
+  go cs = case instrs IA.!? cs.inst_ptr of
     Just i -> go (step i cs)
     Nothing -> cs
 
   present cs =
     intercalate "," . fmap show . reverse $ cs.outs
 
-day17a :: Solution (ComputerState, [Inst]) String
+day17a :: Solution (ComputerState, Array Int Inst, [Int]) String
 day17a = Solution{sParse = parse, sShow = show, sSolve = Right . solveA}
 
-day17b :: Solution _ _
-day17b = Solution{sParse = Right, sShow = show, sSolve = Right}
+-- Build up a passing number by generating the output numbers one-by-one
+-- after inspecting the program manually.
+solveB :: (ComputerState, Array Int Inst, [Int]) -> Int
+solveB (_, _, rawProgram) =
+  head $ go 0 (reverse rawProgram)
+ where
+  go :: Int -> [Int] -> [Int]
+  go n [] = [n]
+  go n (tgt : tgts) =
+    [ x
+    | i <- [0 .. 7]
+    , let t = (n `shiftL` 3) + i
+    , check tgt t
+    , x <- go t tgts
+    ]
+
+  check :: Int -> Int -> Bool
+  check tgt n =
+    -- This is manually generated from inspection of the program.
+    let
+      b = (n .&. 7) .^. 2
+      c = n `shiftR` b
+     in
+      (b .^. c .^. 7) .&. 7 == tgt
+
+day17b :: Solution (ComputerState, Array Int Inst, [Int]) Int
+day17b = Solution{sParse = parse, sShow = show, sSolve = Right . solveB}
