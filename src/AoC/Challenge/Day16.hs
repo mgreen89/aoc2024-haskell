@@ -12,7 +12,7 @@ where
 -- , day16b
 
 import AoC.Common.Graph (aStar)
-import AoC.Common.Point (Dir (..), dirPoint, dirRot, manhattan, parse2dCharMap)
+import AoC.Common.Point (Dir (..), dirPoint, manhattan, parse2dCharMap)
 import AoC.Solution
 import AoC.Util (maybeToEither)
 import Data.Map (Map)
@@ -44,8 +44,8 @@ solveA (walls, s, e) =
      in M.union
           straight
           ( M.fromList
-              [ ((p, dirRot L d), 1000)
-              , ((p, dirRot R d), 1000)
+              [ ((p, L <> d), 1000)
+              , ((p, R <> d), 1000)
               ]
           )
 

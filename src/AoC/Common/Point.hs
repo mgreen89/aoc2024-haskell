@@ -1,4 +1,5 @@
 {-# OPTIONS_GHC -Wno-unused-top-binds #-}
+{-# LANGUAGE InstanceSigs #-}
 
 module AoC.Common.Point (
   cardinalDiffs,
@@ -134,3 +135,18 @@ dirPoint = \case
   R -> V2 1 0
   D -> V2 0 1
   L -> V2 (-1) 0
+
+instance Semigroup Dir where
+  (<>) :: Dir -> Dir -> Dir
+  (<>) = dirRot
+
+  stimes :: Integral b => b -> Dir -> Dir
+  stimes n d = case n `mod` 4 of
+    1 -> d
+    2 -> d <> d
+    3 -> d <> D
+    _ -> U
+
+instance Monoid Dir where
+  mempty :: Dir
+  mempty = U
