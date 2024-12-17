@@ -1,22 +1,16 @@
-{-# LANGUAGE PartialTypeSignatures #-}
-{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
-{-# OPTIONS_GHC -Wno-unused-imports #-}
-{-# OPTIONS_GHC -Wno-unused-top-binds #-}
-
 module AoC.Challenge.Day16 (
   day16a,
+  day16b,
 )
 where
 
--- day16a
--- , day16b
-
-import AoC.Common.Graph (aStar)
+import AoC.Common.Graph (aStar, explore)
 import AoC.Common.Point (Dir (..), dirPoint, manhattan, parse2dCharMap)
 import AoC.Solution
 import AoC.Util (maybeToEither)
 import Data.Map (Map)
 import qualified Data.Map as M
+import Data.Maybe (fromJust)
 import Data.Set (Set)
 import qualified Data.Set as S
 import Linear (V2 (..))
@@ -29,28 +23,45 @@ parse inp =
       walls = M.keysSet $ M.filter (== '#') raw
    in (walls, s, e)
 
+neighbs :: Set (V2 Int) -> (V2 Int, Dir) -> Map (V2 Int, Dir) Int
+neighbs walls (p, d) =
+  let straight =
+        ( if (p + dirPoint d) `S.member` walls
+            then M.empty
+            else M.singleton (p + dirPoint d, d) 1
+        )
+   in M.union
+        straight
+        ( M.fromList
+            [ ((p, L <> d), 1000)
+            , ((p, R <> d), 1000)
+            ]
+        )
+
 solveA :: (Set (V2 Int), V2 Int, V2 Int) -> Maybe Int
 solveA (walls, s, e) =
-  aStar heur neighbs (s, R) atEnd
+  aStar heur (neighbs walls) (s, R) atEnd
  where
   heur = manhattan e . fst
   atEnd = (== e) . fst
-  neighbs (p, d) =
-    let straight =
-          ( if (p + dirPoint d) `S.member` walls
-              then M.empty
-              else M.singleton (p + dirPoint d, d) 1
-          )
-     in M.union
-          straight
-          ( M.fromList
-              [ ((p, L <> d), 1000)
-              , ((p, R <> d), 1000)
-              ]
-          )
 
 day16a :: Solution (Set (V2 Int), V2 Int, V2 Int) Int
 day16a = Solution{sParse = Right . parse, sShow = show, sSolve = maybeToEither "failed" . solveA}
 
-day16b :: Solution _ _
-day16b = Solution{sParse = Right, sShow = show, sSolve = Right}
+solveB :: (Set (V2 Int), V2 Int, V2 Int) -> Int
+solveB (walls, s@(V2 sx sy), e@(V2 ex ey)) =
+  let
+    minLength = fromJust $ solveA (walls, s, e)
+    fromS = explore (neighbs walls) (s, R)
+    fromE = explore (neighbs walls) (e, D)
+   in
+    S.size . S.fromList $
+      [ V2 x y
+      | x <- [sx .. ex]
+      , y <- [ey .. sy]
+      , d <- [U ..]
+      , ((+) <$> fromS M.!? (V2 x y, d) <*> fromE M.!? (V2 x y, d <> D)) == Just minLength
+      ]
+
+day16b :: Solution (Set (V2 Int), V2 Int, V2 Int) Int
+day16b = Solution{sParse = Right . parse, sShow = show, sSolve = Right . solveB}
