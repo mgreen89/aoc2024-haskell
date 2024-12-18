@@ -1,15 +1,8 @@
-{-# LANGUAGE PartialTypeSignatures #-}
-{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
-{-# OPTIONS_GHC -Wno-unused-imports #-}
-{-# OPTIONS_GHC -Wno-unused-top-binds #-}
-
 module AoC.Challenge.Day18 (
-    day18a
+  day18a,
+  day18b,
 )
 where
-
--- day18a
--- , day18b
 
 import AoC.Common.Graph (aStar)
 import AoC.Common.Point (cardinalNeighbs, inBoundingBox, manhattan)
@@ -47,8 +40,30 @@ solveA inp =
           ]
    in fromJust $ aStar (manhattan end) neighbs start (== end)
 
-day18a :: Solution [V2 Int] _
+day18a :: Solution [V2 Int] Int
 day18a = Solution{sParse = parse, sShow = show, sSolve = Right . solveA}
 
-day18b :: Solution _ _
-day18b = Solution{sParse = Right, sShow = show, sSolve = Right}
+solveB :: [V2 Int] -> V2 Int
+solveB inp =
+    go (first S.fromList $ splitAt 1024 inp)
+    where
+        start = V2 0 0
+        end = V2 70 70
+        bb = (start, end)
+
+        go (corrupted, r : rest) =
+            case aStar (manhattan end) neighbs start (== end) of
+                Just _ -> go (S.insert r corrupted, rest)
+                Nothing -> r
+            where
+                neighbs p =
+                    M.fromList
+                    [ (n, 1)
+                    | n <- cardinalNeighbs p
+                    , inBoundingBox bb n
+                    , n `S.notMember` S.insert r corrupted
+                    ]
+
+
+day18b :: Solution [V2 Int] String
+day18b = Solution{sParse = parse, sShow = show, sSolve = Right . (\(V2 x y) -> show x ++ "," ++ show y) . solveB}
