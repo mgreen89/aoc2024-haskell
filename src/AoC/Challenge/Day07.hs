@@ -45,7 +45,9 @@ day07a :: Solution [(Int, NonEmpty Int)] Int
 day07a = Solution{sParse = parse, sShow = show, sSolve = Right . solve [(+), (*)]}
 
 cat :: Int -> Int -> Int
-cat x y = read (show x ++ show y) -- eww
+cat x y =
+  let mul = head . dropWhile (< y) $ iterate (* 10) 1
+  in mul * x + y
 
 day07b :: Solution [(Int, NonEmpty Int)] Int
 day07b = Solution{sParse = parse, sShow = show, sSolve = Right . solve [(+), (*), cat]}
