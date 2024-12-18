@@ -93,19 +93,21 @@ step i cs = (\s -> s{inst_ptr = s.inst_ptr + 1}) $ case i of
   Bdv x -> cs{b = cs.a `shiftR` comboVal cs x}
   Cdv x -> cs{c = cs.a `shiftR` comboVal cs x}
 
-solveA :: (ComputerState, Array Int Inst, [Int]) -> String
-solveA (initCs, instrs, _) = present $ go initCs
+solveA :: (ComputerState, Array Int Inst, [Int]) -> [Int]
+solveA (initCs, instrs, _) = reverse . outs $ go initCs
  where
   go :: ComputerState -> ComputerState
   go cs = case instrs IA.!? cs.inst_ptr of
     Just i -> go (step i cs)
     Nothing -> cs
 
-  present cs =
-    intercalate "," . fmap show . reverse $ cs.outs
-
-day17a :: Solution (ComputerState, Array Int Inst, [Int]) String
-day17a = Solution{sParse = parse, sShow = show, sSolve = Right . solveA}
+day17a :: Solution (ComputerState, Array Int Inst, [Int]) [Int]
+day17a =
+  Solution
+    { sParse = parse
+    , sShow = intercalate "," . fmap show
+    , sSolve = Right . solveA
+    }
 
 -- Build up a passing number by generating the output numbers one-by-one
 -- after inspecting the program manually.

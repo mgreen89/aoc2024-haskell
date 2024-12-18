@@ -69,10 +69,10 @@ solveB inp =
         . binarySearch (isNothing . findPath . (css M.!)) 1025
         $ M.size css
 
-day18b :: Solution [V2 Int] String
+day18b :: Solution [V2 Int] (V2 Int)
 day18b =
   Solution
     { sParse = parse
-    , sShow = show
-    , sSolve = Right . (\(V2 x y) -> show x ++ "," ++ show y) . solveB
+    , sShow = \(V2 x y) -> show x ++ "," ++ show y
+    , sSolve = Right . solveB
     }
