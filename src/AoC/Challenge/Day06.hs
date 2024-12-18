@@ -8,7 +8,6 @@ import AoC.Common.Point (
   Dir (..),
   boundingBox',
   dirPoint,
-  dirRot,
   inBoundingBox,
   parse2dCharMap,
  )
@@ -35,67 +34,50 @@ parse = bimap M.keysSet (fst . M.findMin) . M.partition id . parseMap x
     _ -> Nothing
 
 step :: Set (V2 Int) -> (V2 Int, Dir) -> (V2 Int, Dir)
-step blocks (p, d) =
-  if (p + dirPoint d) `S.member` blocks
-    then (p, dirRot d R)
-    else (p + dirPoint d, d)
+step blocks (p, d)
+  | p' `S.member` blocks = (p, d <> R)
+  | otherwise = (p', d)
+ where
+  p' = p + dirPoint d
+
+steps :: (V2 Int, V2 Int) -> Set (V2 Int) -> V2 Int -> [(V2 Int, Dir)]
+steps bb blocks start =
+  takeWhile (inBoundingBox bb . fst)
+    . iterate (step blocks)
+    $ (start, U)
 
 solveA :: (Set (V2 Int), V2 Int) -> Int
 solveA (blocks, startPos) =
-  S.size
-    . S.fromList
-    . takeWhile (inBoundingBox bb)
-    . fmap fst
-    . iterate (step blocks)
-    $ (startPos, U)
+  S.size . S.fromList . steps bb blocks $ startPos
  where
   bb = fromMaybe (V2 0 0, V2 0 0) (boundingBox' blocks)
 
 day06a :: Solution (Set (V2 Int), V2 Int) Int
 day06a = Solution{sParse = Right . parse, sShow = show, sSolve = Right . solveA}
 
-stepWithHistory ::
-  Set (V2 Int) ->
-  ((V2 Int, Dir), Set (V2 Int, Dir)) ->
-  Either ((V2 Int, Dir), Set (V2 Int, Dir)) ((V2 Int, Dir), Set (V2 Int, Dir))
-stepWithHistory blocks ((p, d), h) =
-  if (p', d') `S.member` h
-    then Left ((p', d'), h)
-    else Right ((p', d'), S.insert (p', d') h)
+doesLoop :: (Eq a) => [a] -> Bool
+doesLoop xs0 = go xs0 (drop 1 xs0)
  where
-  (p', d') = step blocks (p, d)
-
-doesLoop :: (Set (V2 Int), V2 Int) -> Bool
-doesLoop (blocks, startPos) =
-  go (startPos, U) S.empty
- where
-  go x h = case stepWithHistory blocks (x, h) of
-    Left _ -> True
-    Right ((p, d), h') -> inBoundingBox bb p && go (p, d) h'
-  bb = fromMaybe (V2 0 0, V2 0 0) (boundingBox' blocks)
+  go (x : xs) (y : _ : ys) = x == y || go xs ys
+  go _ _ = False
 
 solveB :: (Set (V2 Int), V2 Int) -> Int
 solveB (blocks, startPos) =
   length
-    . filter id
-    . fmap (doesLoop . (,startPos) . (`S.insert` blocks))
-    $ possBlocks
+    [ p
+    | p <- initPath
+    , p /= startPos
+    , doesLoop (steps bb (S.insert p blocks) p)
+    ]
  where
   bb = fromMaybe (V2 0 0, V2 0 0) (boundingBox' blocks)
 
-  possBlocks =
-    [ p
-    | p <- initPath
-    , not (S.member p blocks)
-    , p /= startPos
-    ]
-
-  initPath = S.toList
-    . S.fromList
-    . takeWhile (inBoundingBox bb)
-    . fmap fst
-    . iterate (step blocks)
-    $ (startPos, U)
+  initPath =
+    S.toList
+      . S.fromList
+      . fmap fst
+      . steps bb blocks
+      $ startPos
 
 day06b :: Solution (Set (V2 Int), V2 Int) Int
 day06b = Solution{sParse = Right . parse, sShow = show, sSolve = Right . solveB}
