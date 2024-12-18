@@ -81,15 +81,21 @@ solveB (blocks, startPos) =
     . fmap (doesLoop . (,startPos) . (`S.insert` blocks))
     $ possBlocks
  where
-  (V2 xMin yMin, V2 xMax yMax) = fromMaybe (V2 0 0, V2 0 0) (boundingBox' blocks)
+  bb = fromMaybe (V2 0 0, V2 0 0) (boundingBox' blocks)
+
   possBlocks =
     [ p
-    | x <- [xMin .. xMax]
-    , y <- [yMin .. yMax]
-    , let p = V2 x y
+    | p <- initPath
     , not (S.member p blocks)
     , p /= startPos
     ]
+
+  initPath = S.toList
+    . S.fromList
+    . takeWhile (inBoundingBox bb)
+    . fmap fst
+    . iterate (step blocks)
+    $ (startPos, U)
 
 day06b :: Solution (Set (V2 Int), V2 Int) Int
 day06b = Solution{sParse = Right . parse, sShow = show, sSolve = Right . solveB}
