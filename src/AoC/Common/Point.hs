@@ -1,5 +1,5 @@
-{-# OPTIONS_GHC -Wno-unused-top-binds #-}
 {-# LANGUAGE InstanceSigs #-}
+{-# OPTIONS_GHC -Wno-unused-top-binds #-}
 
 module AoC.Common.Point (
   cardinalDiffs,
@@ -101,11 +101,11 @@ data Dir = U | R | D | L deriving (Show, Eq, Ord, Enum, Generic, NFData)
 -- | Parse a direction from an "arrow" character
 dirFromArrow :: Char -> Either String Dir
 dirFromArrow = \case
- '^' -> Right U
- '>' -> Right R
- 'v' -> Right D
- '<' -> Right L
- x -> Left ("Invalid direction arrow: " ++ [x])
+  '^' -> Right U
+  '>' -> Right R
+  'v' -> Right D
+  '<' -> Right L
+  x -> Left ("Invalid direction arrow: " ++ [x])
 
 -- | Rotate a direction.
 dirRot :: Dir -> Dir -> Dir
@@ -140,7 +140,7 @@ instance Semigroup Dir where
   (<>) :: Dir -> Dir -> Dir
   (<>) = dirRot
 
-  stimes :: Integral b => b -> Dir -> Dir
+  stimes :: (Integral b) => b -> Dir -> Dir
   stimes n d = case n `mod` 4 of
     1 -> d
     2 -> d <> d

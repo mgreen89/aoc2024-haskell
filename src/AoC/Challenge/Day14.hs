@@ -8,6 +8,8 @@ import AoC.Common.Point (allNeighbs)
 import AoC.Solution
 import AoC.Util (freqs)
 import Data.Bifunctor (first)
+import Data.Foldable (minimumBy)
+import Data.Function (on)
 import Data.Maybe (mapMaybe)
 import qualified Data.Set as S
 import Data.Void (Void)
@@ -15,8 +17,6 @@ import Linear (V2 (..))
 import qualified Text.Megaparsec as MP
 import qualified Text.Megaparsec.Char as MP
 import qualified Text.Megaparsec.Char.Lexer as MPL
-import Data.Foldable (minimumBy)
-import Data.Function (on)
 
 parser :: MP.Parsec Void String [(V2 Int, V2 Int)]
 parser =
@@ -75,42 +75,40 @@ solveB w h pvs =
 -- | Variance (ish) of integers mod N
 variance :: Int -> [Int] -> Int
 variance n xs =
-    (`div` n) . sum . fmap ((^ 2) . diff mean) $ xs
-    where
-        xn = length xs
-        mean = sum xs `div` xn
+  (`div` n) . sum . fmap ((^ 2) . diff mean) $ xs
+ where
+  xn = length xs
+  mean = sum xs `div` xn
 
-        diff x y =
-            if x - y <  n `div` 2
-                then x - y
-                else n - (x - y)
+  diff x y =
+    if x - y < n `div` 2
+      then x - y
+      else n - (x - y)
 
 solveB' :: Int -> Int -> [(V2 Int, V2 Int)] -> Int
 solveB' w h pvs =
-    let
-        (ps, vs) = unzip pvs
-        psrange :: [(Int, [V2 Int])]
-        psrange = zip [0 ..] $ iterate (zipWith (flip (step w h)) vs) ps
+  let
+    (ps, vs) = unzip pvs
+    psrange :: [(Int, [V2 Int])]
+    psrange = zip [0 ..] $ iterate (zipWith (flip (step w h)) vs) ps
 
-        xVariances :: [(Int, Int)]
-        xVariances = fmap (fmap (variance w . fmap (\(V2 x _) -> x))) . take h $ psrange
-        yVariances = fmap (fmap (variance h . fmap (\(V2 _ y) -> y))) . take w $ psrange
+    xVariances :: [(Int, Int)]
+    xVariances = fmap (fmap (variance w . fmap (\(V2 x _) -> x))) . take h $ psrange
+    yVariances = fmap (fmap (variance h . fmap (\(V2 _ y) -> y))) . take w $ psrange
 
-        (xi, _) = minimumBy (compare `on` snd) xVariances
-        (yi, _) = minimumBy (compare `on` snd) yVariances
+    (xi, _) = minimumBy (compare `on` snd) xVariances
+    (yi, _) = minimumBy (compare `on` snd) yVariances
 
-        -- Get initial guess of n iterations
-        i = (xi - yi) `mod` w
-        -- Hack to 101/103
-        -- Every time we add 101, that's really -2 mod 103
-        -- So find how many of those needed to get to zero.
-        j = if even i then i `div` 2 else (i + h) `div` 2
-        -- Correct if required the initial addition.
-        k = if (xi - yi) < 0 then j - 1 else j
-    in
-        (k * h) + yi
-
-
+    -- Get initial guess of n iterations
+    i = (xi - yi) `mod` w
+    -- Hack to 101/103
+    -- Every time we add 101, that's really -2 mod 103
+    -- So find how many of those needed to get to zero.
+    j = if even i then i `div` 2 else (i + h) `div` 2
+    -- Correct if required the initial addition.
+    k = if (xi - yi) < 0 then j - 1 else j
+   in
+    (k * h) + yi
 
 day14b :: Solution [(V2 Int, V2 Int)] Int
 day14b = Solution{sParse = parse, sShow = show, sSolve = Right . solveB' 101 103}
