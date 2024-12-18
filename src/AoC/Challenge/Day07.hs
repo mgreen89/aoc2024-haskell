@@ -7,8 +7,6 @@ where
 import AoC.Solution
 import Control.Monad (guard)
 import Data.Bifunctor (first)
-import Data.Foldable (foldl')
-import Data.Functor (($>))
 import Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe (mapMaybe)
@@ -31,23 +29,42 @@ parse :: String -> Either String [(Int, NonEmpty Int)]
 parse =
   first MP.errorBundlePretty . MP.parse parser "day07"
 
-solve :: [Int -> Int -> Int] -> [(Int, NonEmpty Int)] -> Int
-solve ops =
-  sum . mapMaybe go
- where
-  go :: (Int, NonEmpty Int) -> Maybe Int
-  go (tgt, x NE.:| xs) = guard (tgt `elem` foldl' go' [x] xs) $> tgt
+solve :: [Int -> Int -> Maybe Int] -> [(Int, NonEmpty Int)] -> Int
+solve ops = sum . mapMaybe (\(n, xs) -> n <$ guard (solveBack ops n xs))
 
-  go' :: [Int] -> Int -> [Int]
-  go' cs x = [op a x | op <- ops, a <- cs]
+solveBack :: [Int -> Int -> Maybe Int] -> Int -> NonEmpty Int -> Bool
+solveBack ops tgt (x NE.:| xs) = x `elem` go tgt (reverse xs)
+ where
+  go a (b : bs) = [n | t <- try a b, n <- go t bs]
+  go a _ = [a]
+
+  try :: Int -> Int -> [Int]
+  try a b = mapMaybe (\f -> f b a) ops
+
+unAdd :: Int -> Int -> Maybe Int
+unAdd x y = y - x <$ guard (y >= x)
+
+unMul :: Int -> Int -> Maybe Int
+unMul x y = y `div` x <$ guard (y `mod` x == 0)
 
 day07a :: Solution [(Int, NonEmpty Int)] Int
-day07a = Solution{sParse = parse, sShow = show, sSolve = Right . solve [(+), (*)]}
+day07a =
+  Solution
+    { sParse = parse
+    , sShow = show
+    , sSolve = Right . solve [unAdd, unMul]
+    }
 
-cat :: Int -> Int -> Int
-cat x y =
-  let mul = head . dropWhile (< y) $ iterate (* 10) 1
-  in mul * x + y
+unCat :: Int -> Int -> Maybe Int
+unCat x y =
+  let mul = head . dropWhile (< x) $ iterate (* 10) 1
+      (d, m) = y `divMod` mul
+   in d <$ guard (m == x)
 
 day07b :: Solution [(Int, NonEmpty Int)] Int
-day07b = Solution{sParse = parse, sShow = show, sSolve = Right . solve [(+), (*), cat]}
+day07b =
+  Solution
+    { sParse = parse
+    , sShow = show
+    , sSolve = Right . solve [unAdd, unMul, unCat]
+    }

@@ -55,6 +55,8 @@ solveA (blocks, startPos) =
 day06a :: Solution (Set (V2 Int), V2 Int) Int
 day06a = Solution{sParse = Right . parse, sShow = show, sSolve = Right . solveA}
 
+-- | Detect loops using tortoise and hare
+-- x is slow, y is fast.
 doesLoop :: (Eq a) => [a] -> Bool
 doesLoop xs0 = go xs0 (drop 1 xs0)
  where
