@@ -1,24 +1,17 @@
-{-# LANGUAGE PartialTypeSignatures #-}
-{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
-{-# OPTIONS_GHC -Wno-unused-imports #-}
-{-# OPTIONS_GHC -Wno-unused-top-binds #-}
-
 module AoC.Challenge.Day19 (
   day19a,
+  day19b,
 )
 where
 
--- day19a
--- , day19b
-
 import AoC.Solution
 import Data.Bifunctor (first)
-import Data.Maybe (mapMaybe)
+import Data.Maybe (isJust)
+import qualified Data.MemoTrie as Memo
 import Data.Void (Void)
 import Safe (headMay)
 import qualified Text.Megaparsec as MP
 import qualified Text.Megaparsec.Char as MP
-import qualified Text.Megaparsec.Char.Lexer as MPL
 
 parser :: MP.Parsec Void String ([String], [String])
 parser = do
@@ -32,20 +25,43 @@ parse :: String -> Either String ([String], [String])
 parse =
   first MP.errorBundlePretty . MP.parse parser "day19"
 
-solveA :: ([String], [String]) -> Int
-solveA (towels, designs) =
-  length $ mapMaybe (headMay . go) designs
+isPossible :: [String] -> String -> Bool
+isPossible parts full = isJust . headMay $ go full
  where
   go "" = [()]
   go r =
     [ x
-    | t <- towels
-    , take (length t) r == t
-    , x <- go (drop (length t) r)
+    | p <- parts
+    , let (pre, post) = splitAt (length p) r
+    , pre == p
+    , x <- go post
     ]
+
+solveA :: ([String], [String]) -> Int
+solveA (towels, designs) = length $ filter (isPossible towels) designs
 
 day19a :: Solution ([String], [String]) Int
 day19a = Solution{sParse = parse, sShow = show, sSolve = Right . solveA}
 
-day19b :: Solution _ _
-day19b = Solution{sParse = Right, sShow = show, sSolve = Right}
+howManyMatches :: [String] -> String -> Int
+howManyMatches parts = go
+ where
+  go :: String -> Int
+  go = Memo.memo go2
+
+  go2 :: String -> Int
+  go2 "" = 1
+  go2 r =
+    sum
+      [ go post
+      | p <- parts
+      , let (pre, post) = splitAt (length p) r
+      , pre == p
+      ]
+
+solveB :: ([String], [String]) -> Int
+solveB (towels, designs) =
+  sum . fmap (howManyMatches towels) $ filter (isPossible towels) designs
+
+day19b :: Solution ([String], [String]) Int
+day19b = Solution{sParse = parse, sShow = show, sSolve = Right . solveB}
