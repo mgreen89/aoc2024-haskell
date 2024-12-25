@@ -5,12 +5,12 @@ where
 
 import AoC.Solution
 import Data.Bifunctor (bimap)
-import Data.List (transpose, partition)
+import Data.List (partition, transpose)
 import Data.List.Split (splitOn)
 
 parse :: String -> ([[Int]], [[Int]])
 parse =
-    bimap (fmap fst) (fmap fst)
+  bimap (fmap fst) (fmap fst)
     . partition snd
     . fmap (handle . lines)
     . splitOn "\n\n"
