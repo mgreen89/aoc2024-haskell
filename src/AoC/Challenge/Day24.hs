@@ -91,5 +91,30 @@ solveA (inits, gates) =
 day24a :: Solution ([(Wire, Bool)], [Gate]) Int
 day24a = Solution{sParse = parse, sShow = show, sSolve = Right . solveA}
 
+{-
+ For a ripple adder:
+
+ c0 x0 y0 -> c1 z0
+
+ c0 0:
+     x00     1
+ y00 (0,0) (0,1)
+   1 (0,1) (1,0)
+
+ c0 1:
+     x00     1
+ y00 (0,1) (1,0)
+   1 (1,0) (1,1)
+
+Looks like this is always done by:
+
+  xn ^ yn -> a
+  xn & yn -> b
+
+  a ^ c(n-1) -> zn
+  a & c(n-1) -> d
+  d | b -> cn
+-}
+
 day24b :: Solution _ _
 day24b = Solution{sParse = Right, sShow = show, sSolve = Right}
