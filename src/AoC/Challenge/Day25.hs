@@ -4,13 +4,14 @@ module AoC.Challenge.Day25 (
 where
 
 import AoC.Solution
-import Data.Foldable (foldl')
-import Data.List (transpose)
+import Data.Bifunctor (bimap)
+import Data.List (transpose, partition)
 import Data.List.Split (splitOn)
 
 parse :: String -> ([[Int]], [[Int]])
 parse =
-  foldl' (\(ls, ks) (ns, isL) -> if isL then (ns : ls, ks) else (ls, ns : ks)) ([], [])
+    bimap (fmap fst) (fmap fst)
+    . partition snd
     . fmap (handle . lines)
     . splitOn "\n\n"
  where
@@ -21,12 +22,7 @@ parse =
           if isLock
             then transpose ss
             else reverse <$> transpose ss
-     in (,isLock) . fmap (go 0 . drop 1) $ toParse
-   where
-    go :: Int -> String -> Int
-    go n ('.' : _) = n
-    go n ('#' : rest) = go (n + 1) rest
-    go _ _ = error "Invalid character"
+     in (,isLock) . fmap (length . takeWhile (== '#') . drop 1) $ toParse
 
 solveA :: ([[Int]], [[Int]]) -> Int
 solveA (locks, keys) =
