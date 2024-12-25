@@ -7,10 +7,13 @@ where
 import AoC.Common (listTup2)
 import AoC.Solution
 import AoC.Util (maybeToEither)
+import Data.Foldable (maximumBy)
+import Data.Functor.Foldable (hylo)
 import Data.List (intercalate, isPrefixOf, sort, sortOn)
 import Data.List.Split (splitOn)
 import Data.Map (Map)
 import qualified Data.Map as M
+import Data.Ord (comparing)
 import Data.Set (Set)
 import qualified Data.Set as S
 
@@ -50,6 +53,7 @@ day23a =
     }
 
 --  Bron-Kerbosh
+{-
 bk :: Map String (Set String) -> [Set String]
 bk m = go [] S.empty (M.keysSet m) S.empty
  where
@@ -66,11 +70,35 @@ bk m = go [] S.empty (M.keysSet m) S.empty
 
 solveB :: [(String, String)] -> Set String
 solveB = last . sortOn S.size . bk . getLinkMap
+-}
+
+-- Fix-point of a functor for a labelled list of children.
+newtype In a = In {out :: [(String, a)]}
+  deriving (Functor)
+
+allCliques :: Map String (Set String) -> [[String]]
+allCliques links =
+  hylo collapse build (M.toList links)
+ where
+  build :: [(String, Set String)] -> In [(String, Set String)]
+  build =
+    In
+      . fmap
+        ( \(a, ns) ->
+            ( a
+            , [ (b, ns `S.intersection` (links M.! b))
+              | b <- S.toList ns
+              ]
+            )
+        )
+  collapse :: In [[String]] -> [[String]]
+  collapse =
+    foldMap (\(a, bs) -> (a :) <$> if null bs then pure [] else bs) . out
 
 day23b :: Solution [(String, String)] (Set String)
 day23b =
   Solution
     { sParse = parse
     , sShow = intercalate "," . S.toAscList
-    , sSolve = Right . solveB
+    , sSolve = Right . S.fromList . maximumBy (comparing length) . allCliques . getLinkMap
     }
